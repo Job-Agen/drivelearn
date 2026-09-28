@@ -1,0 +1,5 @@
+{
+  "name": "drivelearn",
+  "private": true,
+  "workspaces": ["packages/*"]
+}
