@@ -68,14 +68,6 @@ declare
   v_total integer := 0;
   v_correct integer := 0;
 begin
-  select * into v_row from practice_sessions where id = p_session_id;
-  if found then
-    if v_row.user_id <> p_user_id then
-      raise exception 'session_conflict';
-    end if;
-    return v_row;
-  end if;
-
   if (p_kind = 'lecon' and p_lesson_id is null) or (p_kind = 'theme' and p_unit_id is null) then
     raise exception 'invalid_session';
   end if;
@@ -83,13 +75,22 @@ begin
     raise exception 'invalid_answers';
   end if;
 
+  -- Idempotent, y compris pour deux envois simultanés de la même séance
   v_completed := least(coalesce(p_completed_at, now()), now());
   insert into practice_sessions (id, user_id, kind, lesson_id, unit_id, completed_at, activity_date, active_seconds)
   values (
     p_session_id, p_user_id, p_kind, p_lesson_id, p_unit_id, v_completed,
     (v_completed at time zone 'Africa/Lome')::date,
     greatest(0, least(coalesce(p_active_seconds, 0), 3600))
-  );
+  )
+  on conflict (id) do nothing;
+  if not found then
+    select * into v_row from practice_sessions where id = p_session_id;
+    if v_row.user_id <> p_user_id then
+      raise exception 'session_conflict';
+    end if;
+    return v_row;
+  end if;
 
   for v_answer in select value from jsonb_array_elements(p_answers) loop
     v_qid := (v_answer ->> 'question_id')::uuid;

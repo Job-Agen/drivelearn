@@ -109,6 +109,20 @@ describe("examen gratuit", () => {
     }));
 });
 
+describe("examen gratuit expiré", () => {
+  it("est noté et apparaît dans l'historique même si l'élève n'a pas de Pass", () =>
+    withTx(async (db) => {
+      const { programId } = await setup(db);
+      const exam = await start(db, "user-a", programId);
+      await db.query("update exam_attempts set expires_at = now() - interval '1 minute' where id = $1", [exam.attempt_id]);
+      await expectError(db, "select start_exam($1, $2)", ["user-a", programId], "pass_required");
+
+      expect((await status(db, "user-a")).exams_taken).toBe(1);
+      const history = await scalar<Array<{ attempt_id: string }>>(db, "select get_exam_history('user-a')");
+      expect(history.map((h) => h.attempt_id)).toEqual([exam.attempt_id]);
+    }));
+});
+
 describe("avec un Pass", () => {
   it("note un examen expiré avec les réponses reçues et en ouvre un nouveau", () =>
     withTx(async (db) => {

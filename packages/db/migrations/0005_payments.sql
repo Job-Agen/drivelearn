@@ -98,6 +98,14 @@ begin
   set status = 'confirmed', gateway_ref = p_gateway_ref, confirmed_at = now(), failure_reason = null
   where id = p_payment_id;
 
+  -- Compte supprimé entre le paiement et la confirmation : rien à activer
+  if v_pay.user_id is null then
+    return null;
+  end if;
+
+  -- Un seul calcul de période à la fois par élève, pour que les Pass s'enchaînent
+  perform 1 from profiles where id = v_pay.user_id for update;
+
   select greatest(now(), coalesce(max(ends_at), now())) into v_start
   from passes where user_id = v_pay.user_id;
 

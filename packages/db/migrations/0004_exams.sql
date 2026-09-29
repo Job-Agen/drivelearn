@@ -157,13 +157,28 @@ begin
   where id = v_a.id;
 end $$;
 
+-- Note les examens expirés avec les réponses reçues
+create function finalize_expired_exams(p_user_id text)
+returns void
+language plpgsql
+as $$
+declare
+  v_expired uuid;
+begin
+  for v_expired in
+    select id from exam_attempts
+    where user_id = p_user_id and submitted_at is null and expires_at <= now()
+  loop
+    perform finalize_exam(v_expired);
+  end loop;
+end $$;
+
 create function start_exam(p_user_id text, p_program_id uuid)
 returns jsonb
 language plpgsql
 as $$
 declare
   v_program programs;
-  v_expired uuid;
   v_open_id uuid;
   v_ids uuid[];
   v_id uuid;
@@ -173,12 +188,10 @@ begin
     raise exception 'program_not_found';
   end if;
 
-  for v_expired in
-    select id from exam_attempts
-    where user_id = p_user_id and submitted_at is null and expires_at <= now()
-  loop
-    perform finalize_exam(v_expired);
-  end loop;
+  -- Un seul démarrage à la fois par élève (double appui)
+  perform 1 from profiles where id = p_user_id for update;
+
+  perform finalize_expired_exams(p_user_id);
 
   select id into v_open_id from exam_attempts
   where user_id = p_user_id and submitted_at is null
@@ -214,7 +227,8 @@ as $$
 declare
   v_a exam_attempts;
 begin
-  select * into v_a from exam_attempts where id = p_attempt_id and user_id = p_user_id;
+  -- Verrou : attend une notation en cours, puis voit l'examen comme soumis
+  select * into v_a from exam_attempts where id = p_attempt_id and user_id = p_user_id for update;
   if not found then
     raise exception 'exam_not_found';
   end if;
@@ -250,6 +264,8 @@ declare
   v_required integer := setting_int('ready_after_consecutive_passes');
   v_consecutive integer;
 begin
+  perform finalize_expired_exams(p_user_id);
+
   select count(*) into v_consecutive
   from (
     select sum(case when passed then 0 else 1 end) over (order by submitted_at desc) as fails
@@ -271,15 +287,20 @@ end $$;
 
 create function get_exam_history(p_user_id text)
 returns jsonb
-language sql stable
+language plpgsql
 as $$
-  select coalesce(jsonb_agg(jsonb_build_object(
-    'attempt_id', id,
-    'submitted_at', submitted_at,
-    'score', score,
-    'total', coalesce(array_length(question_ids, 1), 0),
-    'passed', passed
-  ) order by submitted_at desc), '[]'::jsonb)
-  from exam_attempts
-  where user_id = p_user_id and submitted_at is not null;
-$$;
+begin
+  perform finalize_expired_exams(p_user_id);
+
+  return (
+    select coalesce(jsonb_agg(jsonb_build_object(
+      'attempt_id', id,
+      'submitted_at', submitted_at,
+      'score', score,
+      'total', coalesce(array_length(question_ids, 1), 0),
+      'passed', passed
+    ) order by submitted_at desc), '[]'::jsonb)
+    from exam_attempts
+    where user_id = p_user_id and submitted_at is not null
+  );
+end $$;

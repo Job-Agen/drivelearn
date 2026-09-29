@@ -107,6 +107,18 @@ describe("paiement", () => {
     }));
 });
 
+describe("compte supprimé avant la confirmation", () => {
+  it("confirme le paiement sans créer de Pass, sans erreur", () =>
+    withTx(async (db) => {
+      await setup(db);
+      const p = await createPayment(db, "user-a");
+      await db.query("select delete_account('user-a')");
+      await confirm(db, p.id, "REF1", 3000);
+      expect(await scalar<string>(db, "select status::text from payments where id = $1", [p.id])).toBe("confirmed");
+      expect(await scalar<number>(db, "select count(*)::int from passes")).toBe(0);
+    }));
+});
+
 describe("rapport des commissions", () => {
   it("totalise les ventes confirmées du mois par auto-école", () =>
     withTx(async (db) => {
