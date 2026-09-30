@@ -32,7 +32,10 @@ const INVALID_INPUT_SQLSTATES = new Set(["23514", "23503", "22P02", "22007", "22
 
 export function toHttpError(err: unknown): HttpError {
   if (err instanceof HttpError) return err;
-  if (err instanceof ZodError) return new HttpError(400, "invalid_input", "Données invalides.");
+  // SyntaxError : corps JSON mal formé ou vide (c.req.json())
+  if (err instanceof ZodError || err instanceof SyntaxError) {
+    return new HttpError(400, "invalid_input", "Données invalides.");
+  }
   const pgError = err as { code?: string; message?: string };
   if (pgError?.code === "P0001" && pgError.message && pgError.message in BUSINESS_ERRORS) {
     const [status, message] = BUSINESS_ERRORS[pgError.message];

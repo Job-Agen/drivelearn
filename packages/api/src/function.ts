@@ -15,11 +15,15 @@ function required(name: string): string {
 const pool = new pg.Pool({ connectionString: required("DATABASE_URL"), max: 5 });
 attachDatabasePool(pool);
 
+const authBaseUrl = required("NEON_AUTH_BASE_URL");
+// Neon injecte NEON_AUTH_JWKS_URL ; repli sur l'adresse standard de Neon Auth si elle manque.
+const jwksUrl = process.env.NEON_AUTH_JWKS_URL ?? `${authBaseUrl.replace(/\/$/, "")}/.well-known/jwks.json`;
+
 export default createApp({
   db: pool,
   verifyToken: createTokenVerifier({
-    keys: createRemoteJWKSet(new URL(required("NEON_AUTH_JWKS_URL"))),
-    issuer: new URL(required("NEON_AUTH_BASE_URL")).origin,
+    keys: createRemoteJWKSet(new URL(jwksUrl)),
+    issuer: new URL(authBaseUrl).origin,
   }),
   authAdmin: createNeonAuthAdmin({
     apiKey: required("NEON_API_KEY"),

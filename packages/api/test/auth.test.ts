@@ -55,6 +55,15 @@ describe("authentification", () => {
       expect(await scalar<number>(db, "select count(*)::int from profiles where id = 'user-a'")).toBe(1);
     }));
 
+  it("répond 400 (et non 500) à un corps JSON mal formé ou vide", () =>
+    withApp(async (api) => {
+      const token = await signToken("user-a");
+      for (const [path, body] of [["/v1/me", "{bad"], ["/v1/sessions", "pas du json"], ["/v1/reports", ""]] as const) {
+        const res = await api.raw(path.startsWith("/v1/me") ? "PATCH" : "POST", path, body, token);
+        expect({ path, status: res.status, error: res.body.error }).toEqual({ path, status: 400, error: "invalid_input" });
+      }
+    }));
+
   it("répond 404 en JSON sur une route inconnue", () =>
     withApp(async (api) => {
       const res = await api.request("GET", "/v1/inexistant", { user: "user-a" });

@@ -47,6 +47,8 @@ export type TestApi = {
     path: string,
     opts?: { user?: string; token?: string; body?: unknown },
   ): Promise<TestResponse>;
+  /** Envoie un corps brut, tel quel (pour tester un JSON mal formé). */
+  raw(method: string, path: string, body: string, token: string): Promise<TestResponse>;
   deleted: string[];
 };
 
@@ -81,6 +83,15 @@ export function withApp<T>(
       const text = await res.text();
       return { status: res.status, body: text ? JSON.parse(text) : null };
     };
-    return fn({ request, deleted }, db);
+    const raw: TestApi["raw"] = async (method, path, body, token) => {
+      const res = await app.request(path, {
+        method,
+        headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+        body,
+      });
+      const text = await res.text();
+      return { status: res.status, body: text ? JSON.parse(text) : null };
+    };
+    return fn({ request, raw, deleted }, db);
   });
 }
