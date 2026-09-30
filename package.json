@@ -1,5 +1,10 @@
 {
   "name": "drivelearn",
   "private": true,
-  "workspaces": ["packages/*"]
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@neon/config": "^1.8.3"
+  }
 }
