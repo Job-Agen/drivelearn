@@ -25,11 +25,18 @@ export default createApp({
     keys: createRemoteJWKSet(new URL(jwksUrl)),
     issuer: new URL(authBaseUrl).origin,
   }),
-  authAdmin: createNeonAuthAdmin({
-    apiKey: required("NEON_API_KEY"),
-    projectId: required("NEON_PROJECT_ID"),
-    branchId: required("NEON_BRANCH_ID"),
-  }),
+  // Sans clé d'API, tout fonctionne sauf la suppression de compte (502 « réessayez »).
+  authAdmin: process.env.NEON_API_KEY
+    ? createNeonAuthAdmin({
+        apiKey: process.env.NEON_API_KEY,
+        projectId: required("NEON_PROJECT_ID"),
+        branchId: required("NEON_BRANCH_ID"),
+      })
+    : {
+        async deleteUser() {
+          throw new Error("NEON_API_KEY non configurée : suppression de compte indisponible");
+        },
+      },
   requireVerifiedEmail: process.env.REQUIRE_VERIFIED_EMAIL !== "false",
   imagesBaseUrl: process.env.IMAGES_BASE_URL ?? null,
 });
