@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme {
+  --color-nuit: #0b1f5c;
+  --color-bleu: #1565e8;
+  --color-sarcelle: #10a3a3;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900;
+}
