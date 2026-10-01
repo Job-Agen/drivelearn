@@ -56,3 +56,64 @@ export async function createProgram(db: Queryable, input: z.input<typeof NewProg
   );
   return rows[0].id;
 }
+
+export async function examConformity(db: Queryable, programId: string) {
+  const program = await getProgram(db, programId);
+  const { rows: units } = await db.query(
+    `select u.id as unit_id, u.title,
+            (select count(*)::int from questions q where q.unit_id = u.id and q.status = 'validee') as available
+     from units u where u.program_id = $1 order by u.position`,
+    [programId],
+  );
+  const distribution = program.exam_distribution ?? {};
+  const requested = units
+    .filter((u) => distribution[u.unit_id] !== undefined)
+    .map((u) => ({ ...u, requested: distribution[u.unit_id] as number }));
+  const distributionSum = Object.values(distribution).reduce((a, b) => a + b, 0);
+  const validatedTotal = units.reduce((a, u) => a + u.available, 0);
+
+  const problems: string[] = [];
+  if (validatedTotal < program.exam_question_count) {
+    problems.push(`Banque insuffisante : ${validatedTotal} question(s) validée(s) pour ${program.exam_question_count} demandée(s).`);
+  }
+  if (Object.keys(distribution).length > 0 && distributionSum !== program.exam_question_count) {
+    problems.push(`La répartition totalise ${distributionSum} question(s) au lieu de ${program.exam_question_count}.`);
+  }
+  for (const u of requested) {
+    if (u.available < u.requested) {
+      problems.push(`L'unité « ${u.title} » n'a que ${u.available} question(s) validée(s) pour ${u.requested} demandée(s).`);
+    }
+  }
+  return { problems, validated_total: validatedTotal, distribution_sum: distributionSum, units: requested };
+}
+
+const ExamSettings = z.object({
+  exam_question_count: z.number().int().min(1).max(100),
+  exam_pass_mark: z.number().int().min(1),
+  exam_seconds_per_question: z.number().int().min(5).max(600),
+  exam_distribution: z.record(z.string(), z.number().int().min(0).max(100)),
+});
+
+export async function updateExamSettings(db: Queryable, programId: string, input: z.input<typeof ExamSettings>): Promise<void> {
+  const s = ExamSettings.parse(input);
+  if (s.exam_pass_mark > s.exam_question_count) throw new AdminError("Le seuil ne peut pas dépasser le nombre de questions.");
+  const distribution = Object.fromEntries(Object.entries(s.exam_distribution).filter(([, n]) => n > 0));
+  const ids = Object.keys(distribution);
+  if (ids.length > 0) {
+    const { rows } = await db.query("select count(*)::int as n from units where program_id = $1 and id::text = any($2)", [programId, ids]);
+    if (rows[0].n !== ids.length) throw new AdminError("Unité inconnue dans la répartition.");
+  }
+  await db.query(
+    `update programs set exam_question_count = $2, exam_pass_mark = $3, exam_seconds_per_question = $4, exam_distribution = $5
+     where id = $1`,
+    [programId, s.exam_question_count, s.exam_pass_mark, s.exam_seconds_per_question, JSON.stringify(distribution)],
+  );
+}
+
+export async function setProgramStatus(db: Queryable, programId: string, status: ProgramRow["status"]): Promise<void> {
+  if (status === "publie") {
+    const { problems } = await examConformity(db, programId);
+    if (problems.length > 0) throw new AdminError(`Publication impossible. ${problems.join(" ")}`);
+  }
+  await db.query("update programs set status = $2 where id = $1", [programId, status]);
+}
