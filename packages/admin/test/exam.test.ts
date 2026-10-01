@@ -64,3 +64,16 @@ describe("examen et publication", () => {
       await expect(updateExamSettings(db, b.programId, { ...settings, exam_pass_mark: 25, exam_distribution: {} })).rejects.toThrow();
     }));
 });
+
+describe("programme publié", () => {
+  it("refuse des paramètres qui rendraient l'examen non conforme", () =>
+    withTx(async (db) => {
+      const { programId, unitId, lessonId } = await createPath(db, { examQuestionCount: 1, examPassMark: 1 });
+      await createQuestion(db, { unitId, lessonId, status: "validee" });
+      await setProgramStatus(db, programId, "publie");
+      await expect(
+        updateExamSettings(db, programId, { exam_question_count: 5, exam_pass_mark: 3, exam_seconds_per_question: 30, exam_distribution: {} }),
+      ).rejects.toThrow("Banque insuffisante");
+      expect((await getProgram(db, programId)).exam_question_count).toBe(1);
+    }));
+});

@@ -31,3 +31,15 @@ describe("ventes", () => {
       expect(payments[0]).toMatchObject({ school_name: "Le Volant", email: "user-a@test.tg" });
     }));
 });
+
+describe("export des ventes", () => {
+  it("ne garde que les paiements confirmés quand on le demande", () =>
+    withTx(async (db) => {
+      await createUser(db, "user-b");
+      const p = (await db.query("select id from create_payment('user-b')")).rows[0].id;
+      await db.query("select confirm_payment($1, 'REF9', 3000)", [p]);
+      await db.query("select create_payment('user-b')");
+      const confirmed = await listPayments(db, { month: currentMonth(), confirmedOnly: true });
+      expect(confirmed.filter((x) => x.email === "user-b@test.tg").map((x) => x.status)).toEqual(["confirmed"]);
+    }));
+});

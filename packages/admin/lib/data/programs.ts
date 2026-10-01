@@ -57,8 +57,12 @@ export async function createProgram(db: Queryable, input: z.input<typeof NewProg
   return rows[0].id;
 }
 
-export async function examConformity(db: Queryable, programId: string) {
-  const program = await getProgram(db, programId);
+export async function examConformity(
+  db: Queryable,
+  programId: string,
+  proposed?: { exam_question_count: number; exam_distribution: Record<string, number> },
+) {
+  const program = { ...(await getProgram(db, programId)), ...proposed };
   const { rows: units } = await db.query(
     `select u.id as unit_id, u.title,
             (select count(*)::int from questions q where q.unit_id = u.id and q.status = 'validee') as available
@@ -102,6 +106,14 @@ export async function updateExamSettings(db: Queryable, programId: string, input
   if (ids.length > 0) {
     const { rows } = await db.query("select count(*)::int as n from units where program_id = $1 and id::text = any($2)", [programId, ids]);
     if (rows[0].n !== ids.length) throw new AdminError("Unité inconnue dans la répartition.");
+  }
+  const current = await getProgram(db, programId);
+  if (current.status === "publie") {
+    const { problems } = await examConformity(db, programId, {
+      exam_question_count: s.exam_question_count,
+      exam_distribution: distribution,
+    });
+    if (problems.length > 0) throw new AdminError(`Programme publié : ces paramètres rendraient l'examen non conforme. ${problems.join(" ")}`);
   }
   await db.query(
     `update programs set exam_question_count = $2, exam_pass_mark = $3, exam_seconds_per_question = $4, exam_distribution = $5

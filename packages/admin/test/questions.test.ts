@@ -78,3 +78,55 @@ describe("questions", () => {
       expect((await listQuestions(db, { programId })).total).toBe(0);
     }));
 });
+
+describe("questions — corrections de relecture", () => {
+  it("garde les identifiants des réponses et le statut quand on réenregistre sans changement", () =>
+    withTx(async (db) => {
+      const { unitId, lessonId } = await createPath(db);
+      const id = await saveQuestion(db, base(unitId, lessonId));
+      await setQuestionStatus(db, id, "validee");
+      const before = await getQuestion(db, id);
+      await saveQuestion(db, {
+        ...base(unitId, lessonId),
+        id,
+        choices: before.choices.map((c) => ({ id: c.id, label: c.label, is_correct: c.is_correct })),
+      });
+      const after = await getQuestion(db, id);
+      expect(after.status).toBe("validee");
+      expect(after.choices.map((c) => c.id)).toEqual(before.choices.map((c) => c.id));
+    }));
+
+  it("met à jour une réponse sur place, ajoute et supprime les autres", () =>
+    withTx(async (db) => {
+      const { unitId, lessonId } = await createPath(db);
+      const id = await saveQuestion(db, base(unitId, lessonId));
+      const [stop, parking] = (await getQuestion(db, id)).choices;
+      await saveQuestion(db, {
+        ...base(unitId, lessonId),
+        id,
+        choices: [
+          { id: stop.id, label: "STOP", is_correct: true },
+          { id: parking.id, label: "", is_correct: false }, // vidée : supprimée
+          { label: "Sens interdit", is_correct: false },
+        ],
+      });
+      const after = (await getQuestion(db, id)).choices;
+      expect(after.map((c) => c.label)).toEqual(["STOP", "Sens interdit"]);
+      expect(after[0].id).toBe(stop.id);
+    }));
+
+  it("refuse de supprimer une question validée ou déjà travaillée par des élèves", () =>
+    withTx(async (db) => {
+      const { unitId, lessonId } = await createPath(db);
+      const validated = await createQuestion(db, { unitId, lessonId, status: "validee" });
+      await expect(deleteQuestion(db, validated.id)).rejects.toThrow("validée");
+
+      await createUser(db, "user-a");
+      await db.query(
+        `select submit_session('user-a', gen_random_uuid(), 'lecon', $1, null, now(), 60, $2)`,
+        [lessonId, JSON.stringify([{ question_id: validated.id, choice_ids: validated.correct }])],
+      );
+      await db.query("update questions set status = 'brouillon' where id = $1", [validated.id]);
+      await expect(deleteQuestion(db, validated.id)).rejects.toThrow("élèves");
+    }));
+});

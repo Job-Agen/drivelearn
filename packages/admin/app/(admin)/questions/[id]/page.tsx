@@ -2,6 +2,7 @@ import { Button, Card, Field, Flash, inputClass, PageTitle, StatusBadge } from "
 import { runAction } from "@/lib/actions";
 import { requireAdmin } from "@/lib/admin";
 import { deleteQuestion, getQuestion, saveQuestion, setQuestionStatus, type QuestionDetail, type QuestionStatus } from "@/lib/data/questions";
+import { examConformity, getProgram } from "@/lib/data/programs";
 import { listUnits } from "@/lib/data/units";
 import { inTransaction, pool } from "@/lib/db";
 
@@ -23,6 +24,7 @@ async function save(formData: FormData) {
   await runAction(back, async () => {
     const [unitId, lessonId] = text(formData, "placement").split(":");
     const choices = Array.from({ length: 8 }, (_, i) => ({
+      id: text(formData, `choice_id_${i}`) || undefined,
       label: text(formData, `choice_${i}`),
       is_correct: formData.get(`correct_${i}`) === "on",
     }));
@@ -79,7 +81,9 @@ export default async function QuestionEditor({
   const question: QuestionDetail | null = isNew ? null : await getQuestion(pool, id);
   const programId = question?.program_id ?? sp.program ?? "";
   const units = await listUnits(pool, programId);
-  const choices = Array.from({ length: 8 }, (_, i) => question?.choices[i] ?? { label: "", is_correct: false });
+  const program = programId ? await getProgram(pool, programId) : null;
+  const problems = program?.status === "publie" ? (await examConformity(pool, programId)).problems : [];
+  const choices = Array.from({ length: 8 }, (_, i) => question?.choices[i] ?? { id: "", label: "", is_correct: false });
   const placement = question ? `${question.unit_id}:${question.lesson_id ?? ""}` : "";
   const multiple = (question?.choices.filter((c) => c.is_correct).length ?? 0) > 1;
 
@@ -90,6 +94,11 @@ export default async function QuestionEditor({
         actions={question && <StatusBadge status={question.status} />}
       />
       <Flash ok={sp.ok} error={sp.error} />
+      {problems.length > 0 && (
+        <p className="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Attention : le programme publié n'est plus conforme. {problems.join(" ")}
+        </p>
+      )}
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2">
           <Card>
@@ -113,6 +122,7 @@ export default async function QuestionEditor({
                 <p className="mb-2 text-sm font-medium text-slate-700">Réponses (cochez la ou les bonnes réponses)</p>
                 {choices.map((c, i) => (
                   <div key={i} className="mb-2 flex items-center gap-3">
+                    <input type="hidden" name={`choice_id_${i}`} value={c.id} />
                     <span className="w-6 text-sm font-semibold text-slate-500">{String.fromCharCode(65 + i)}</span>
                     <input name={`choice_${i}`} defaultValue={c.label} className={inputClass} />
                     <label className="flex shrink-0 items-center gap-1 text-sm">

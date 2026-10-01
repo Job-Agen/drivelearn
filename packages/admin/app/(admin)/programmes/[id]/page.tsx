@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Button, Card, Field, Flash, inputClass, PageTitle, StatusBadge } from "@/components/ui";
 import { runAction } from "@/lib/actions";
 import { requireAdmin } from "@/lib/admin";
-import { getProgram } from "@/lib/data/programs";
+import { examConformity, getProgram } from "@/lib/data/programs";
 import { createLesson, createUnit, deleteLesson, deleteUnit, listUnits, moveItem, renameUnit, updateLesson } from "@/lib/data/units";
 import { pool } from "@/lib/db";
 
@@ -52,7 +52,12 @@ export default async function ProgramPage({
 }) {
   await requireAdmin();
   const { id } = await params;
-  const [program, units, flash] = await Promise.all([getProgram(pool, id), listUnits(pool, id), searchParams]);
+  const [program, units, flash, conformity] = await Promise.all([
+    getProgram(pool, id),
+    listUnits(pool, id),
+    searchParams,
+    examConformity(pool, id),
+  ]);
   return (
     <>
       <PageTitle
@@ -67,6 +72,11 @@ export default async function ProgramPage({
         }
       />
       <Flash {...flash} />
+      {program.status === "publie" && conformity.problems.length > 0 && (
+        <p className="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Attention : ce programme publié n'est plus conforme. {conformity.problems.join(" ")}
+        </p>
+      )}
       {units.map((unit) => (
         <Card key={unit.id}>
           <form action={unitAction} className="mb-4 flex items-end gap-2">

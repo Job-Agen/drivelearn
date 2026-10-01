@@ -70,18 +70,21 @@ const QuestionInput = z.object({
   image_path: z.string().trim().max(300).nullable(),
   explanation: z.string().trim().max(2000).nullable(),
   source: z.string().trim().max(300).nullable(),
+  // Une ligne vide est ignorée ; une ligne existante (id) vidée est supprimée.
   choices: z
-    .array(z.object({ label: z.string().trim().max(300), is_correct: z.boolean() }))
-    .transform((cs) => cs.filter((c) => c.label.length > 0))
-    .pipe(z.array(z.object({ label: z.string(), is_correct: z.boolean() })).max(8, "8 choix au maximum")),
+    .array(z.object({ id: z.uuid().optional(), label: z.string().trim().max(300), is_correct: z.boolean() }))
+    .refine((cs) => cs.filter((c) => c.label.length > 0).length <= 8, "8 choix au maximum"),
 });
 export type QuestionInput = z.input<typeof QuestionInput>;
 
-/** À appeler dans une transaction : met à jour la question et remplace tous ses choix. */
+/** À appeler dans une transaction. Les réponses existantes sont modifiées sur place (leurs identifiants
+ *  restent ceux enregistrés dans l'historique des élèves) ; seules les réponses modifiées sont réécrites. */
 export async function saveQuestion(client: Queryable, input: QuestionInput): Promise<string> {
   const q = QuestionInput.parse(input);
   const fields = [q.unit_id, q.lesson_id, q.prompt, q.image_path || null, q.explanation || null, q.source || null];
+  const kept = q.choices.filter((c) => c.label.length > 0);
   let id = q.id;
+  let existing: { id: string; label: string; is_correct: boolean; position: number }[] = [];
   if (id) {
     const res = await client.query(
       `update questions set unit_id = $2, lesson_id = $3, prompt = $4, image_path = $5, explanation = $6, source = $7
@@ -89,7 +92,7 @@ export async function saveQuestion(client: Queryable, input: QuestionInput): Pro
       [id, ...fields],
     );
     if (res.rowCount === 0) throw new AdminError("Question introuvable.");
-    await client.query("delete from choices where question_id = $1", [id]);
+    existing = (await client.query("select id, label, is_correct, position from choices where question_id = $1", [id])).rows;
   } else {
     const { rows } = await client.query(
       `insert into questions (unit_id, lesson_id, prompt, image_path, explanation, source)
@@ -98,13 +101,29 @@ export async function saveQuestion(client: Queryable, input: QuestionInput): Pro
     );
     id = rows[0].id as string;
   }
-  for (const [i, c] of q.choices.entries()) {
-    await client.query("insert into choices (question_id, label, is_correct, position) values ($1, $2, $3, $4)", [
-      id,
-      c.label,
-      c.is_correct,
-      i + 1,
-    ]);
+
+  const keptIds = new Set(kept.map((c) => c.id).filter(Boolean));
+  for (const old of existing) {
+    if (!keptIds.has(old.id)) await client.query("delete from choices where id = $1", [old.id]);
+  }
+  for (const [i, c] of kept.entries()) {
+    const position = i + 1;
+    const old = existing.find((e) => e.id === c.id);
+    if (!old) {
+      await client.query("insert into choices (question_id, label, is_correct, position) values ($1, $2, $3, $4)", [
+        id,
+        c.label,
+        c.is_correct,
+        position,
+      ]);
+    } else if (old.label !== c.label || old.is_correct !== c.is_correct || old.position !== position) {
+      await client.query("update choices set label = $2, is_correct = $3, position = $4 where id = $1", [
+        old.id,
+        c.label,
+        c.is_correct,
+        position,
+      ]);
+    }
   }
   return id;
 }
@@ -116,6 +135,21 @@ export async function setQuestionStatus(client: Queryable, id: string, status: Q
   if (res.rowCount === 0) throw new AdminError("Question introuvable.");
 }
 
+/** Seule une question jamais validée et jamais travaillée par un élève peut être supprimée. */
 export async function deleteQuestion(db: Queryable, id: string): Promise<void> {
+  const { rows } = await db.query(
+    `select q.status::text as status,
+            exists (select 1 from session_answers a where a.question_id = q.id)
+              or exists (select 1 from exam_answers e where e.question_id = q.id) as answered
+     from questions q where q.id = $1`,
+    [id],
+  );
+  if (!rows[0]) throw new AdminError("Question introuvable.");
+  if (rows[0].status === "validee") {
+    throw new AdminError("Une question validée ne peut pas être supprimée : repassez-la d'abord en brouillon.");
+  }
+  if (rows[0].answered) {
+    throw new AdminError("Des élèves ont déjà répondu à cette question : laissez-la en brouillon plutôt que de la supprimer.");
+  }
   await db.query("delete from questions where id = $1", [id]);
 }

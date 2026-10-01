@@ -7,11 +7,11 @@ export async function GET(request: Request) {
   await requireAdmin();
   const url = new URL(request.url);
   const month = url.searchParams.get("month") || currentMonth();
-  const payments = await listPayments(pool, { month, schoolId: url.searchParams.get("school") || undefined });
+  // Seules les ventes confirmées : les paiements en attente ou échoués n'ont rien rapporté.
+  const payments = await listPayments(pool, { month, schoolId: url.searchParams.get("school") || undefined, confirmedOnly: true });
   const csv = toCsv(payments, [
     ["created_at", "Date"],
     ["confirmed_at", "Confirmé le"],
-    ["status", "Statut"],
     ["email", "Élève"],
     ["school_name", "Auto-école"],
     ["base_amount_xof", "Prix (FCFA)"],

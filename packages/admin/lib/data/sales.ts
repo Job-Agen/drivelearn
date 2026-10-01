@@ -34,7 +34,10 @@ export async function commissionReport(db: Queryable, month: string): Promise<Co
   return rows;
 }
 
-export async function listPayments(db: Queryable, f: { month: string; schoolId?: string }): Promise<PaymentRow[]> {
+export async function listPayments(
+  db: Queryable,
+  f: { month: string; schoolId?: string; confirmedOnly?: boolean },
+): Promise<PaymentRow[]> {
   const { rows } = await db.query(
     `select pay.id, pay.created_at, pay.confirmed_at, pay.status::text as status, pay.base_amount_xof, pay.discount_xof,
             pay.amount_xof, pay.commission_xof, s.name as school_name, p.email
@@ -43,8 +46,9 @@ export async function listPayments(db: Queryable, f: { month: string; schoolId?:
      left join profiles p on p.id = pay.user_id
      where pay.created_at >= $1::date and pay.created_at < ($1::date + interval '1 month')
        and ($2::uuid is null or pay.driving_school_id = $2)
+       and ($3::boolean is not true or pay.status = 'confirmed')
      order by pay.created_at desc`,
-    [monthStart(f.month), f.schoolId ?? null],
+    [monthStart(f.month), f.schoolId ?? null, f.confirmedOnly ?? false],
   );
   return rows;
 }
