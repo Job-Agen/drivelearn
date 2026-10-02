@@ -7,6 +7,7 @@ import { useApp } from "../state/app";
 import { Illustration } from "./Illustration";
 import { imageUrl } from "./images";
 import { Body, Button, Link, Mentor, Option, Picture, Screen, Segments, TopBar } from "./kit";
+import { Chip } from "./parts";
 import { colors, fonts, space } from "./theme";
 
 /** Écrans 10 (question) et 11 (correction), communs aux leçons et aux révisions. */
@@ -14,8 +15,14 @@ export function Quiz({
   questions,
   onClose,
   onFinish,
+  title,
+  chipFor,
 }: {
   questions: Question[];
+  /** Titre de l'en-tête (écran 14 « Mes erreurs ») : retour à gauche, compteur à droite. */
+  title?: string;
+  /** Étiquette du thème affichée au-dessus de l'image (écran 14). */
+  chipFor?: (question: Question) => string | null;
   onClose: () => void;
   onFinish: (state: QuizState, startedAt: number) => void;
 }) {
@@ -35,9 +42,10 @@ export function Quiz({
     else dispatch({ type: "next" });
   };
 
+  const chip = chipFor?.(question);
   const header = (
     <>
-      <TopBar onClose={onClose} />
+      {title ? <TopBar onBack={onClose} title={title} right={`${state.index + 1} / ${total}`} /> : <TopBar onClose={onClose} />}
       <Segments total={total} done={state.index + 1} />
     </>
   );
@@ -93,9 +101,12 @@ export function Quiz({
 
   return (
     <Screen header={header} footer={<Button label="Valider" onPress={() => dispatch({ type: "check" })} disabled={state.selected.length === 0} />}>
-      <Body muted>
-        Question {state.index + 1} sur {total}
-      </Body>
+      {title ? null : (
+        <Body muted>
+          Question {state.index + 1} sur {total}
+        </Body>
+      )}
+      {chip ? <Chip label={chip} icon="warning-outline" /> : null}
       <Picture uri={imageUrl(bundle, question.image_path)} />
       <View style={{ gap: 2 }}>
         <Text style={styles.prompt}>{question.prompt}</Text>

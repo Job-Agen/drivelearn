@@ -97,6 +97,7 @@ authApp.post("/sign-out", (c) => {
 });
 authApp.post("/send-verification-email", (c) => c.json({ status: true }));
 authApp.post("/request-password-reset", (c) => c.json({ status: true }));
+authApp.post("/reset-password", (c) => c.json({ status: true }));
 
 const root = new Hono();
 // Le navigateur (expo web) envoie le cookie de session : CORS avec identifiants.

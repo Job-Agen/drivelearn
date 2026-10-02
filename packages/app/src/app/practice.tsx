@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { questionIndex, sample, unitQuestions } from "../domain/path";
+import type { Unit } from "../lib/types";
 import { score } from "../domain/quiz";
 import { api } from "../lib/api";
 import { REVIEW_BATCH } from "../lib/config";
@@ -71,9 +72,15 @@ export default function PracticeScreen() {
     );
   }
 
+  const unitOf = new Map<string, Unit>();
+  for (const unit of bundle?.content.units ?? []) for (const q of unitQuestions(unit)) unitOf.set(q.id, unit);
+  const themeTitle = mode === "theme" ? bundle?.content.units.find((u) => u.id === unitId)?.title : undefined;
+
   return (
     <Quiz
       key={round}
+      title={themeTitle ?? "Mes erreurs"}
+      chipFor={(q) => unitOf.get(q.id)?.title ?? null}
       questions={questions}
       onClose={() => router.back()}
       onFinish={(state, startedAt) => {

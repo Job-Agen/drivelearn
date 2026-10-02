@@ -87,8 +87,23 @@ export const auth = {
     await call("/send-verification-email", { email });
   },
 
+  /** Le lien reçu par e-mail rouvre l'app sur l'écran 25 (drivelearn://reset-password?token=…). */
   async requestPasswordReset(email: string): Promise<void> {
-    await call("/request-password-reset", { email });
+    await call("/request-password-reset", { email, redirectTo: "drivelearn://reset-password" });
+  },
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    await call("/reset-password", { token, newPassword });
+  },
+
+  /** Vérifie le mot de passe sans changer la session en cours (avant une suppression de compte). */
+  async checkPassword(email: string, password: string): Promise<void> {
+    const kept = await loadSession();
+    try {
+      await call("/sign-in/email", { email, password });
+    } finally {
+      if (kept !== null) await saveSession(kept);
+    }
   },
 
   async signOut(): Promise<void> {

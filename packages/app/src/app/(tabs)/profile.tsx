@@ -1,123 +1,110 @@
-import { useState } from "react";
-import { Alert, Pressable, Switch, Text } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { api } from "../../lib/api";
 import { useApp } from "../../state/app";
-import { Body, Button, Card, ErrorText, Field, Row, Screen, Title } from "../../ui/kit";
-import { colors, radius, space } from "../../ui/theme";
+import { Flag, Illustration } from "../../ui/Illustration";
+import { Screen } from "../../ui/kit";
+import { Group, ListRow } from "../../ui/parts";
+import { colors, fonts, radius, space } from "../../ui/theme";
+import { PRIVACY_URL } from "../(auth)/sign-up";
 
-const GOALS = [5, 10, 15] as const;
-
-/** Écrans 21, 22, 25, 27 : profil, préférences, code promo, compte. */
+/** Écran 21 — Mon profil. */
 export default function ProfileScreen() {
-  const { me, updateMe, setMe, signOut, deleteAccount } = useApp();
-  const [firstName, setFirstName] = useState(me?.first_name ?? "");
-  const [time, setTime] = useState(me?.reminder_time ?? "19:00");
-  const [code, setCode] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
+  const { me, bundle, signOut } = useApp();
+  const [hasPass, setHasPass] = useState(false);
+  useFocusEffect(
+    useCallback(() => {
+      api
+        .examStatus()
+        .then((s) => setHasPass(s.has_pass))
+        .catch(() => {});
+    }, []),
+  );
   if (!me) return null;
-
-  const save = async (patch: Parameters<typeof updateMe>[0]) => {
-    setError(null);
-    setMessage(null);
-    try {
-      await updateMe(patch);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Enregistrement impossible.");
-    }
-  };
-
-  const applyCode = async () => {
-    setError(null);
-    setMessage(null);
-    try {
-      const { driving_school_name } = await api.setPromoCode(code.trim() || null);
-      await setMe({ ...me, driving_school_name });
-      setMessage(driving_school_name ? `Code accepté : ${driving_school_name}` : "Code retiré.");
-      setCode("");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Code refusé.");
-    }
-  };
-
-  const confirmDelete = () =>
-    Alert.alert(
-      "Supprimer mon compte ?",
-      "Ta progression, tes examens et ton Pass seront définitivement effacés. Cette action est irréversible.",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Supprimer",
-          style: "destructive",
-          onPress: () => deleteAccount().catch((e) => setError(e instanceof Error ? e.message : "Suppression impossible.")),
-        },
-      ],
-    );
+  const country = bundle?.content.program.name ?? "Togo";
 
   return (
-    <Screen>
-      <Title>Profil</Title>
-      <Card>
-        <Field
-          label="Prénom"
-          value={firstName}
-          onChangeText={setFirstName}
-          maxLength={40}
-          onEndEditing={() => firstName.trim() && firstName.trim() !== me.first_name && save({ first_name: firstName.trim() })}
+    <Screen tabs>
+      <View style={styles.head}>
+        <Text style={styles.title}>Mon profil</Text>
+        <Pressable onPress={() => router.push("/settings")} hitSlop={10} accessibilityLabel="Réglages">
+          <Ionicons name="settings-sharp" size={28} color={colors.navy} />
+        </Pressable>
+      </View>
+      <View style={styles.identity}>
+        <View style={styles.avatar}>
+          <Illustration name="avatarStudent" width={124} round />
+        </View>
+        <View style={{ flex: 1, gap: 6 }}>
+          <Text style={styles.name} numberOfLines={1}>
+            {me.first_name ?? "Élève"}
+          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+            <Flag country="TG" width={30} />
+            <Text style={styles.country}>{country}</Text>
+          </View>
+          <View style={styles.offer}>
+            <Text style={styles.offerText}>{hasPass ? "Pass Examen actif" : "Offre gratuite"}</Text>
+          </View>
+        </View>
+      </View>
+
+      <Group>
+        <ListRow icon="locate" iconColor={colors.primary} label="Mon objectif" value={`${me.daily_goal_minutes} min / jour`} onPress={() => router.push("/settings")} />
+        <ListRow leading={<Flag country="TG" width={28} />} label="Mon pays" value={country} onPress={() => router.push("/settings")} />
+        <ListRow
+          icon="notifications"
+          label="Rappel quotidien"
+          value={me.reminder_enabled ? me.reminder_time : "Désactivé"}
+          onPress={() => router.push("/settings")}
         />
-        <Body muted>{me.email}</Body>
-      </Card>
+      </Group>
+      <Group>
+        <ListRow icon="ribbon" iconColor={colors.accent} label="Mon Pass Examen" onPress={() => router.push("/pass")} />
+        <ListRow icon="school" label="Code auto-école" value={me.driving_school_name ?? undefined} onPress={() => router.push("/settings")} />
+        <ListRow icon="shield" iconColor={colors.blueDark} label="Confidentialité" onPress={() => Linking.openURL(PRIVACY_URL)} />
+        <ListRow icon="trash-outline" iconColor={colors.danger} label="Supprimer mon compte" onPress={() => router.push("/delete-account")} />
+      </Group>
+      <Group>
+        <ListRow icon="log-out-outline" iconColor={colors.danger} label="Se déconnecter" danger chevron={false} onPress={signOut} />
+      </Group>
 
-      <Card>
-        <Text style={{ fontWeight: "800", fontSize: 16, color: colors.text }}>Objectif quotidien</Text>
-        <Row>
-          {GOALS.map((g) => (
-            <Pressable
-              key={g}
-              onPress={() => save({ daily_goal_minutes: g })}
-              style={{
-                flex: 1,
-                alignItems: "center",
-                padding: space.sm,
-                borderRadius: radius.sm,
-                borderWidth: 2,
-                borderColor: me.daily_goal_minutes === g ? colors.primary : colors.border,
-                backgroundColor: me.daily_goal_minutes === g ? colors.primarySoft : colors.card,
-              }}
-            >
-              <Text style={{ fontWeight: "800", color: colors.text }}>{g} min</Text>
-            </Pressable>
-          ))}
-        </Row>
-        <Row style={{ justifyContent: "space-between" }}>
-          <Text style={{ fontWeight: "700", color: colors.text }}>Rappel quotidien</Text>
-          <Switch value={me.reminder_enabled} onValueChange={(v) => save({ reminder_enabled: v })} trackColor={{ true: colors.primary }} />
-        </Row>
-        {me.reminder_enabled ? (
-          <Field
-            label="Heure du rappel (HH:MM)"
-            value={time}
-            onChangeText={setTime}
-            keyboardType="numbers-and-punctuation"
-            maxLength={5}
-            onEndEditing={() => /^([01]\d|2[0-3]):[0-5]\d$/.test(time) ? save({ reminder_time: time }) : setError("Heure invalide, par exemple 19:00.")}
-          />
-        ) : null}
-      </Card>
-
-      <Card>
-        <Text style={{ fontWeight: "800", fontSize: 16, color: colors.text }}>Auto-école</Text>
-        <Body muted>{me.driving_school_name ? `Rattaché à ${me.driving_school_name}` : "Tu as un code promo de ton auto-école ?"}</Body>
-        <Field label="Code promo" value={code} onChangeText={setCode} autoCapitalize="characters" maxLength={20} />
-        <Button label="Appliquer" variant="outline" onPress={applyCode} disabled={!code.trim()} />
-      </Card>
-
-      {message ? <Body>{message}</Body> : null}
-      <ErrorText>{error}</ErrorText>
-
-      <Button label="Se déconnecter" variant="outline" onPress={signOut} />
-      <Button label="Supprimer mon compte" variant="ghost" onPress={confirmDelete} />
+      {!hasPass ? (
+        <Pressable onPress={() => router.push("/premium")} accessibilityRole="button">
+          <LinearGradient colors={["#1E7FE0", "#1558C0"]} style={styles.promo}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
+              <Ionicons name="star" size={52} color={colors.accent} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.promoTitle}>Passe au Pass Examen</Text>
+                <Text style={styles.promoText}>Va plus loin, à ton rythme.</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="#fff" />
+            </View>
+            <View style={styles.promoButton}>
+              <Text style={styles.promoButtonText}>Découvrir le Pass</Text>
+            </View>
+          </LinearGradient>
+        </Pressable>
+      ) : null}
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  title: { fontFamily: fonts.black, fontSize: 30, color: colors.navy },
+  identity: { flexDirection: "row", alignItems: "center", gap: space.md },
+  avatar: { borderRadius: 999, borderWidth: 4, borderColor: colors.blueSoft },
+  name: { fontFamily: fonts.black, fontSize: 26, color: colors.navy },
+  country: { fontFamily: fonts.semibold, fontSize: 17, color: colors.navy },
+  offer: { alignSelf: "flex-start", backgroundColor: colors.blueSoft, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 6 },
+  offerText: { fontFamily: fonts.bold, fontSize: 15, color: colors.navy },
+  promo: { borderRadius: radius.md, padding: space.md, gap: space.sm },
+  promoTitle: { fontFamily: fonts.black, fontSize: 20, color: "#fff" },
+  promoText: { fontFamily: fonts.semibold, fontSize: 15, color: "#fff" },
+  promoButton: { backgroundColor: "#fff", borderRadius: radius.pill, paddingVertical: 10, alignItems: "center", marginHorizontal: space.xl },
+  promoButtonText: { fontFamily: fonts.black, fontSize: 18, color: colors.blueDark },
+});

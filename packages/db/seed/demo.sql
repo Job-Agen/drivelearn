@@ -50,6 +50,8 @@ begin
   update lessons set intro_title = 'Reconnaître les formes', intro_image_path = 'panneaux-formes.png' where id = v_lesson;
   perform pg_temp.q(v_lesson, 0, 'Quel est ce panneau ?',
     'Le mot STOP permet d''identifier ce panneau.', array['Stop', 'Stationnement', 'Sens interdit'], array[1], 'panneau-stop.png');
+  perform pg_temp.q(v_lesson, 5, 'Quel symbole vois-tu ?',
+    'Le P blanc sur fond bleu indique un parking.', array['La lettre P', 'Une flèche', 'Un piéton'], array[1], 'panneau-parking.png');
   perform pg_temp.q(v_lesson, 1, 'Un panneau triangulaire à bordure rouge indique :',
     'Le triangle à bordure rouge annonce un danger.', array['Un danger', 'Une interdiction', 'Une obligation', 'Une indication'], array[1]);
   perform pg_temp.q(v_lesson, 2, 'Un panneau rond à fond bleu indique :',

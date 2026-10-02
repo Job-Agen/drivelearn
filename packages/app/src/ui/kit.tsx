@@ -26,7 +26,8 @@ export function Screen({
   scroll = true,
   footer,
   header,
-}: PropsWithChildren<{ scroll?: boolean; footer?: ReactNode; header?: ReactNode }>) {
+  tabs,
+}: PropsWithChildren<{ scroll?: boolean; footer?: ReactNode; header?: ReactNode; tabs?: boolean }>) {
   const body = scroll ? (
     <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
       {children}
@@ -35,7 +36,7 @@ export function Screen({
     <View style={[styles.scroll, { flex: 1 }]}>{children}</View>
   );
   return (
-    <SafeAreaView style={styles.screen} edges={["top", "bottom"]}>
+    <SafeAreaView style={styles.screen} edges={tabs ? ["top"] : ["top", "bottom"]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         {header ? <View style={styles.header}>{header}</View> : null}
         {body}
@@ -123,16 +124,18 @@ export function ErrorText({ children }: PropsWithChildren) {
 type ButtonProps = {
   label: string;
   onPress?: () => void;
-  variant?: "primary" | "outline" | "ghost" | "danger";
+  variant?: "primary" | "outline" | "ghost" | "danger" | "blue" | "dangerOutline" | "soft";
+  icon?: IconName;
   disabled?: boolean;
   loading?: boolean;
   chevron?: boolean;
 };
 
 /** Bouton des maquettes : pilule pleine sarcelle avec chevron, ou contour bleu. */
-export function Button({ label, onPress, variant = "primary", disabled, loading, chevron = variant === "primary" }: ButtonProps) {
+export function Button({ label, onPress, variant = "primary", disabled, loading, chevron = variant === "primary", icon }: ButtonProps) {
   const off = disabled || loading;
-  const filled = variant === "primary" || variant === "danger";
+  const filled = variant === "primary" || variant === "danger" || variant === "blue";
+  const tint = filled ? "#fff" : variant === "dangerOutline" ? colors.danger : colors.blueDark;
   return (
     <Pressable
       accessibilityRole="button"
@@ -149,10 +152,11 @@ export function Button({ label, onPress, variant = "primary", disabled, loading,
         <ActivityIndicator color={filled ? "#fff" : colors.blue} />
       ) : (
         <>
-          <Text style={[styles.buttonText, styles[`buttonText_${variant}`]]}>{label}</Text>
-          {chevron ? (
-            <Ionicons name="chevron-forward" size={22} color={filled ? "#fff" : colors.blueDark} style={styles.chevron} />
-          ) : null}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+            {icon ? <Ionicons name={icon} size={22} color={tint} /> : null}
+            <Text style={[styles.buttonText, styles[`buttonText_${variant}`]]}>{label}</Text>
+          </View>
+          {chevron ? <Ionicons name="chevron-forward" size={22} color={tint} style={styles.chevron} /> : null}
         </>
       )}
     </Pressable>
@@ -367,6 +371,12 @@ const styles = StyleSheet.create({
   buttonText_ghost: { color: colors.blueDark, fontSize: 16 },
   buttonText_danger: { color: "#fff" },
   chevron: { position: "absolute", right: 22 },
+  button_blue: { backgroundColor: colors.blue, borderBottomWidth: 4, borderBottomColor: colors.blueDark },
+  button_dangerOutline: { backgroundColor: colors.dangerSoft, borderWidth: 1.5, borderColor: colors.danger },
+  button_soft: { backgroundColor: colors.blueSoft, minHeight: 48, paddingVertical: 10 },
+  buttonText_blue: { color: "#fff" },
+  buttonText_dangerOutline: { color: colors.danger },
+  buttonText_soft: { color: colors.blueDark, fontSize: 17 },
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.md,

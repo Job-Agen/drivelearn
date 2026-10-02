@@ -24,7 +24,6 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{ title: "Parcours", tabBarIcon: icon("book", "book-outline") }} />
       <Tabs.Screen name="review" options={{ title: "Réviser", tabBarIcon: icon("document-text", "document-text-outline") }} />
-      <Tabs.Screen name="exams" options={{ title: "Examens", tabBarIcon: icon("ribbon", "ribbon-outline") }} />
       <Tabs.Screen name="progress" options={{ title: "Progrès", tabBarIcon: icon("bar-chart", "bar-chart-outline") }} />
       <Tabs.Screen name="profile" options={{ title: "Profil", tabBarIcon: icon("person", "person-outline") }} />
     </Tabs>

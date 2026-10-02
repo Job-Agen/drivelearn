@@ -1,13 +1,14 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { toggleChoice } from "../../domain/grading";
 import { api } from "../../lib/api";
 import type { Exam } from "../../lib/types";
 import { useApp } from "../../state/app";
 import { imageUrl } from "../../ui/images";
-import { Badge, Body, Button, Card, ErrorText, Loading, Option, Picture, ProgressBar, Row, Screen, Subtitle, Title } from "../../ui/kit";
-import { colors, space } from "../../ui/theme";
+import { Badge, Body, Button, Card, ErrorText, Loading, Option, Picture, Row, Screen, Segments, Subtitle, Title, TopBar } from "../../ui/kit";
+import { colors, fonts, radius, space } from "../../ui/theme";
 
 /** Écrans 16 et 17 : examen chronométré question par question, puis résultat et correction. */
 export default function ExamScreen() {
@@ -99,33 +100,54 @@ export default function ExamScreen() {
       { text: "Continuer l'examen", style: "cancel" },
       { text: "Quitter", style: "destructive", onPress: () => router.back() },
     ]);
+  const mm = String(Math.floor(left / 60)).padStart(2, "0");
+  const ss = String(left % 60).padStart(2, "0");
+  const last = index + 1 === exam.questions.length;
 
   return (
     <Screen
+      header={
+        <>
+          <TopBar onBack={quit} title="Examen blanc" onClose={quit} />
+          <View style={styles.timerRow}>
+            <View style={styles.timer}>
+              <Ionicons name="time-outline" size={28} color={left <= 5 ? colors.danger : colors.blue} />
+              <Text style={[styles.timerText, left <= 5 && { color: colors.danger }]}>
+                {mm}:{ss}
+              </Text>
+            </View>
+            <View style={{ flex: 1, gap: 6 }}>
+              <Text style={styles.counter}>
+                Question {index + 1} sur {exam.total}
+              </Text>
+              <Segments total={exam.total} done={index + 1} />
+            </View>
+          </View>
+        </>
+      }
       footer={
         <>
           <ErrorText>{error}</ErrorText>
-          <Button label={index + 1 === exam.questions.length ? "Terminer l'examen" : "Question suivante"} onPress={advance} loading={busy} />
+          <Button label={last ? "Terminer" : "Suivant"} onPress={advance} loading={busy} />
+          <Row style={{ justifyContent: "center" }}>
+            <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+            <Text style={styles.saved}>Réponses enregistrées</Text>
+          </Row>
         </>
       }
     >
-      <Row style={{ justifyContent: "space-between" }}>
-        <Button label="Quitter" variant="ghost" onPress={quit} />
-        <Text style={{ fontWeight: "800", color: colors.muted }}>
-          Question {index + 1}/{exam.total}
-        </Text>
-        <Text style={{ fontWeight: "900", fontSize: 18, color: left <= 5 ? colors.danger : colors.text }}>⏱ {left}s</Text>
-      </Row>
-      <ProgressBar value={left / exam.seconds_per_question} color={left <= 5 ? colors.danger : colors.accent} />
-      <Text style={{ color: colors.muted, fontWeight: "700", fontSize: 12, textTransform: "uppercase" }}>
-        {question.multiple ? "Plusieurs réponses possibles" : "Une seule réponse"}
-      </Text>
-      <Subtitle>{question.prompt}</Subtitle>
       <ExamImage path={question.image_path} />
+      <View style={{ gap: 2 }}>
+        <Text style={styles.prompt}>{question.prompt}</Text>
+        {question.multiple ? (
+          <Text style={styles.hint}>Plusieurs réponses possibles</Text>
+        ) : null}
+      </View>
       <View style={{ gap: space.sm }}>
-        {question.choices.map((c) => (
+        {question.choices.map((c, i) => (
           <Option
             key={c.id}
+            index={i}
             label={c.label}
             multiple={question.multiple}
             selected={selected.includes(c.id)}
@@ -163,11 +185,12 @@ function Correction({ exam }: { exam: Exam }) {
             <Badge label={q.is_correct ? "Juste" : "Faux"} tone={q.is_correct ? "primary" : "danger"} />
           </Row>
           <Body>{q.prompt}</Body>
-          {q.choices.map((c) => {
+          {q.choices.map((c, i) => {
             const picked = q.selected?.includes(c.id) ?? false;
             return (
               <Option
                 key={c.id}
+                index={i}
                 label={c.label}
                 multiple={q.multiple}
                 selected={picked}
@@ -181,3 +204,21 @@ function Correction({ exam }: { exam: Exam }) {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  timerRow: { flexDirection: "row", alignItems: "center", gap: space.md },
+  timer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.blueSoft,
+    borderRadius: radius.md,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+  },
+  timerText: { fontFamily: fonts.black, fontSize: 26, color: colors.navy },
+  counter: { fontFamily: fonts.semibold, fontSize: 15, color: colors.navy },
+  prompt: { fontFamily: fonts.black, fontSize: 23, lineHeight: 29, color: colors.navy, textAlign: "center" },
+  hint: { fontFamily: fonts.semibold, fontSize: 15, color: colors.muted, textAlign: "center" },
+  saved: { fontFamily: fonts.semibold, fontSize: 15, color: colors.muted },
+});
