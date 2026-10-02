@@ -5,9 +5,11 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "smoke": "tsx scripts/smoke.ts"
+    "smoke": "tsx scripts/smoke.ts",
+    "dev": "tsx scripts/dev.ts"
   },
   "devDependencies": {
+    "@hono/node-server": "^2.1.3",
     "@types/node": "^26.6.3",
     "@types/pg": "^8.23.1",
     "tsx": "^4.23.15",
