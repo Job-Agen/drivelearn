@@ -39,7 +39,7 @@ export function Results({
       }
     >
       <View style={{ alignItems: "center", gap: space.sm }}>
-        <Illustration name="celebrate" size={170} />
+        <Illustration name="celebrate" width="100%" />
         <Title center size={34}>
           {title}
         </Title>

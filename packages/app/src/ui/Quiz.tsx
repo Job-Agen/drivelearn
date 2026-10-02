@@ -85,7 +85,7 @@ export function Quiz({
         <Picture uri={imageUrl(bundle, question.image_path)} />
         {choices}
         <Mentor text={question.explanation ?? (ok ? "C'est la bonne réponse, continue comme ça !" : "Regarde bien la bonne réponse en vert.")}>
-          <Illustration name="mentor" size={84} disc={false} />
+          <Illustration name="mentor" width={120} />
         </Mentor>
       </Screen>
     );

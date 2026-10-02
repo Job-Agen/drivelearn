@@ -1,42 +1,26 @@
 import { Image } from "expo-image";
-import { Text, View, type ViewStyle } from "react-native";
-import { colors } from "./theme";
+import { View, type ViewStyle } from "react-native";
 
-// Illustrations des maquettes (moniteur, élève, enveloppe…). En attendant les fichiers PNG définitifs,
-// un pictogramme sur disque bleu clair tient la place. Pour brancher une image : la déposer dans
-// assets/illustrations/ et l'ajouter à FILES, par exemple `mentor: require("../../assets/illustrations/mentor.png")`.
+// Illustrations reprises des maquettes. Pour une version haute définition, remplacer le fichier
+// dans assets/illustrations/ en gardant le même nom (et ajuster `ratio` si le cadrage change).
 
 export type IllustrationName = "welcome" | "mentor" | "mentorThumbs" | "studentWave" | "mailLock" | "celebrate";
 
-const FILES: Partial<Record<IllustrationName, number>> = {};
-
-const PLACEHOLDERS: Record<IllustrationName, string> = {
-  welcome: "🚗",
-  mentor: "👨🏾‍🏫",
-  mentorThumbs: "👍🏾",
-  studentWave: "👋🏾",
-  mailLock: "🔐",
-  celebrate: "🎉",
+const FILES: Record<IllustrationName, { source: number; ratio: number }> = {
+  welcome: { source: require("../../assets/illustrations/welcome.png"), ratio: 728 / 556 },
+  mentor: { source: require("../../assets/illustrations/mentor.png"), ratio: 400 / 300 },
+  mentorThumbs: { source: require("../../assets/illustrations/mentor-thumbs.png"), ratio: 526 / 368 },
+  studentWave: { source: require("../../assets/illustrations/student-wave.png"), ratio: 500 / 400 },
+  mailLock: { source: require("../../assets/illustrations/mail-lock.png"), ratio: 574 / 490 },
+  celebrate: { source: require("../../assets/illustrations/celebrate.png"), ratio: 700 / 446 },
 };
 
-export function Illustration({ name, size = 200, style, disc = true }: { name: IllustrationName; size?: number; style?: ViewStyle; disc?: boolean }) {
-  const file = FILES[name];
-  if (file) {
-    return (
-      <View style={style}>
-        <Image source={file} style={{ width: size, height: size }} contentFit="contain" accessibilityIgnoresInvertColors />
-      </View>
-    );
-  }
+/** `width` en points, ou "100%" pour occuper toute la largeur disponible. */
+export function Illustration({ name, width, style }: { name: IllustrationName; width: number | "100%"; style?: ViewStyle }) {
+  const { source, ratio } = FILES[name];
   return (
-    <View
-      style={[
-        { width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center" },
-        disc && { backgroundColor: colors.blueSoft },
-        style,
-      ]}
-    >
-      <Text style={{ fontSize: size * 0.45 }}>{PLACEHOLDERS[name]}</Text>
+    <View style={[{ width, aspectRatio: ratio, alignSelf: "center" }, style]}>
+      <Image source={source} style={{ width: "100%", height: "100%" }} contentFit="contain" accessibilityIgnoresInvertColors />
     </View>
   );
 }

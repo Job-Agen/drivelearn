@@ -47,7 +47,7 @@ export default function SignUp() {
       }
     >
       <View style={{ alignItems: "center", gap: space.sm }}>
-        <Illustration name="mentorThumbs" size={180} />
+        <Illustration name="mentorThumbs" width={270} />
         <Title center>Bienvenue chez{"\n"}DriveLearn</Title>
         <Body muted center>
           Crée ton compte pour commencer ton apprentissage.

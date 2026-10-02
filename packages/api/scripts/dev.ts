@@ -3,6 +3,7 @@
 //   DATABASE_URL=postgres://… npm run dev -w @drivelearn/api
 // Puis dans packages/app : EXPO_PUBLIC_API_URL=http://localhost:8787 EXPO_PUBLIC_AUTH_URL=http://localhost:8787/auth
 import { serve } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
@@ -37,7 +38,7 @@ const api = createApp({
     },
   },
   requireVerifiedEmail: false,
-  imagesBaseUrl: process.env.IMAGES_BASE_URL ?? null,
+  imagesBaseUrl: process.env.IMAGES_BASE_URL ?? `${ISSUER}/images`,
 });
 
 const authApp = new Hono();
@@ -101,6 +102,8 @@ const root = new Hono();
 // Le navigateur (expo web) envoie le cookie de session : CORS avec identifiants.
 root.use("*", cors({ origin: (o) => o, credentials: true, allowHeaders: ["content-type", "authorization"] }));
 root.route("/auth", authApp);
+// Images du contenu de démonstration (en production : stockage objet Neon, Plan 4).
+root.use("/images/*", serveStatic({ root: "../db/seed", rewriteRequestPath: (p) => p }));
 root.route("/", api);
 
 serve({ fetch: root.fetch, port: PORT });

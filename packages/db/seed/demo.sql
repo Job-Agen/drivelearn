@@ -4,15 +4,15 @@
 
 begin;
 
-create function pg_temp.q(p_lesson uuid, p_pos int, p_prompt text, p_explanation text, p_choices text[], p_correct int[])
+create function pg_temp.q(p_lesson uuid, p_pos int, p_prompt text, p_explanation text, p_choices text[], p_correct int[], p_image text default null)
 returns void
 language plpgsql
 as $$
 declare
   v_q uuid;
 begin
-  insert into questions (unit_id, lesson_id, position, prompt, explanation, source, status)
-  select unit_id, p_lesson, p_pos, p_prompt, p_explanation, 'démo', 'brouillon' from lessons where id = p_lesson
+  insert into questions (unit_id, lesson_id, position, prompt, explanation, image_path, source, status)
+  select unit_id, p_lesson, p_pos, p_prompt, p_explanation, p_image, 'démo', 'brouillon' from lessons where id = p_lesson
   returning id into v_q;
   insert into choices (question_id, label, is_correct, position)
   select v_q, label, i = any(p_correct), i from unnest(p_choices) with ordinality as t(label, i);
@@ -42,11 +42,14 @@ declare
   v_lesson uuid;
 begin
   -- Unité 1 : signalisation -----------------------------------------------------------------
-  insert into units (program_id, title, position) values (v_program, 'La signalisation', 1) returning id into v_unit;
+  insert into units (program_id, title, position) values (v_program, 'Les panneaux', 1) returning id into v_unit;
 
   v_lesson := pg_temp.lesson(v_unit, 1, 'Les formes des panneaux',
-    'La forme d''un panneau annonce son rôle avant même de lire son symbole : le triangle prévient d''un danger, le cercle impose une interdiction ou une obligation, le carré ou le rectangle donne une indication.',
-    'Repérez d''abord la forme et la couleur : vous gagnez une seconde précieuse.');
+    'La forme et la couleur donnent des indices.',
+    'Observe avant de répondre.');
+  update lessons set intro_title = 'Reconnaître les formes', intro_image_path = 'panneaux-formes.png' where id = v_lesson;
+  perform pg_temp.q(v_lesson, 0, 'Quel est ce panneau ?',
+    'Le mot STOP permet d''identifier ce panneau.', array['Stop', 'Stationnement', 'Sens interdit'], array[1], 'panneau-stop.png');
   perform pg_temp.q(v_lesson, 1, 'Un panneau triangulaire à bordure rouge indique :',
     'Le triangle à bordure rouge annonce un danger.', array['Un danger', 'Une interdiction', 'Une obligation', 'Une indication'], array[1]);
   perform pg_temp.q(v_lesson, 2, 'Un panneau rond à fond bleu indique :',
@@ -59,7 +62,7 @@ begin
 
   v_lesson := pg_temp.lesson(v_unit, 2, 'Les feux tricolores',
     'Le feu rouge impose l''arrêt, le feu vert autorise le passage si la voie est libre, le feu orange fixe impose l''arrêt sauf si l''arrêt est dangereux.',
-    'Un feu vert ne vous dispense jamais de vérifier que le carrefour est dégagé.');
+    'Un feu vert ne te dispense jamais de vérifier que le carrefour est dégagé.');
   perform pg_temp.q(v_lesson, 1, 'Le feu passe à l''orange alors que je peux m''arrêter sans danger. Je dois :',
     'L''orange fixe impose l''arrêt, sauf si s''arrêter serait dangereux.', array['Accélérer pour passer', 'M''arrêter', 'Klaxonner et passer'], array[2]);
   perform pg_temp.q(v_lesson, 2, 'Au feu vert, le carrefour est encombré. Je peux m''engager :',
@@ -74,7 +77,7 @@ begin
 
   v_lesson := pg_temp.lesson(v_unit, 1, 'La priorité à droite',
     'À une intersection sans panneau ni feu, on cède le passage aux véhicules qui arrivent par la droite.',
-    'Sans panneau, regardez d''abord à droite.');
+    'Sans panneau, regarde d''abord à droite.');
   perform pg_temp.q(v_lesson, 1, 'À une intersection sans signalisation, je laisse passer :',
     'Sans signalisation, la priorité à droite s''applique.', array['Les véhicules venant de gauche', 'Les véhicules venant de droite', 'Le plus gros véhicule'], array[2]);
   perform pg_temp.q(v_lesson, 2, 'La priorité à droite s''applique aussi aux deux-roues venant de droite :',
@@ -114,7 +117,7 @@ begin
 
   v_lesson := pg_temp.lesson(v_unit, 2, 'Distances et dépassements',
     'Plus la vitesse est élevée, plus la distance d''arrêt est longue. Un dépassement se prépare : visibilité, rétroviseurs, clignotant, puis on se rabat sans gêner.',
-    'Gardez au moins deux secondes entre vous et le véhicule devant.');
+    'Garde au moins deux secondes entre toi et le véhicule devant.');
   perform pg_temp.q(v_lesson, 1, 'Sur route mouillée, la distance de freinage :',
     'L''adhérence diminue : il faut plus de distance pour s''arrêter.', array['Diminue', 'Reste la même', 'Augmente'], array[3]);
   perform pg_temp.q(v_lesson, 2, 'Avant de dépasser, je dois :',

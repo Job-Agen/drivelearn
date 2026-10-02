@@ -30,7 +30,7 @@ export default function ForgotPassword() {
   return (
     <Screen header={<TopBar onBack={() => router.back()} />}>
       <View style={{ alignItems: "center", gap: space.sm }}>
-        <Illustration name="mailLock" size={200} />
+        <Illustration name="mailLock" width={260} />
         <Title center>Mot de passe oublié ?</Title>
         <Body muted center>
           Reçois un lien pour choisir un nouveau mot de passe.

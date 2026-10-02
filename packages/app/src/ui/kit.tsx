@@ -305,11 +305,11 @@ export function Logo({ size = 40, light }: { size?: number; light?: boolean }) {
 }
 
 /** Bulle du moniteur (écrans 09 et 11). */
-export function Mentor({ text, children }: PropsWithChildren<{ text: string }>) {
+export function Mentor({ text, children, plain }: PropsWithChildren<{ text: string; plain?: boolean }>) {
   return (
-    <View style={styles.mentor}>
+    <View style={[styles.mentor, plain && { backgroundColor: "transparent", paddingHorizontal: 0 }]}>
       {children}
-      <View style={styles.bubble}>
+      <View style={[styles.bubble, plain && { backgroundColor: colors.blueSoft }]}>
         <Text style={styles.bubbleText}>{text}</Text>
       </View>
     </View>

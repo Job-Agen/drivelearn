@@ -14,7 +14,7 @@ export const colors = {
   danger: "#E5484D",
   dangerSoft: "#FDECEC",
   border: "#D9E5F1",
-  bg: "#F1F8FE",
+  bg: "#F7FBFE", // fond des maquettes
   card: "#FFFFFF",
   locked: "#C5D0DE",
 };

@@ -44,7 +44,7 @@ export default function SignIn() {
         <Body muted center>
           Connecte-toi pour reprendre ton parcours.
         </Body>
-        <Illustration name="studentWave" size={170} />
+        <Illustration name="studentWave" width={240} />
       </View>
       <Field icon="mail-outline" placeholder="Adresse e-mail" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" />
       <Field icon="lock-closed-outline" placeholder="Mot de passe" value={password} onChangeText={setPassword} secureTextEntry autoComplete="current-password" />

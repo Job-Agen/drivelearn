@@ -31,7 +31,7 @@ export default function VerifyEmail() {
       }
     >
       <View style={{ alignItems: "center", gap: space.sm }}>
-        <Illustration name="mailLock" size={200} />
+        <Illustration name="mailLock" width={240} />
         <Title center>Vérifie ton e-mail</Title>
         <Body center>
           Nous avons envoyé un lien de confirmation à <Text style={{ fontFamily: fonts.extrabold }}>{email}</Text>. Ouvre-le, puis

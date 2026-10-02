@@ -9,12 +9,18 @@ import { colors, fonts, radius, space } from "../../ui/theme";
 /** Écran 01 — Bienvenue. */
 export default function Welcome() {
   return (
-    <LinearGradient colors={["#1565C0", "#2E8BE6", "#7DBDF2"]} style={{ flex: 1 }}>
+    <LinearGradient colors={["#1258B8", "#2E7FE0"]} style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
         <View style={styles.hero}>
-          <Logo size={52} light />
+          <Logo size={54} light />
           <Text style={styles.tagline}>Apprends à conduire{"\n"}avec confiance</Text>
-          <Illustration name="welcome" size={220} style={{ backgroundColor: "#ffffff33", marginTop: space.lg }} />
+        </View>
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <View style={{ marginBottom: -space.xl }}>
+            <Illustration name="welcome" width="100%" />
+            {/* Fondu entre le bleu du haut et la scène, comme sur la maquette */}
+            <LinearGradient colors={["#2E7FE0", "#2E7FE000"]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 70 }} />
+          </View>
         </View>
         <View style={styles.sheet}>
           <Text style={styles.title}>Ton permis{"\n"}commence ici</Text>
@@ -30,16 +36,17 @@ export default function Welcome() {
 }
 
 const styles = StyleSheet.create({
-  hero: { flex: 1, alignItems: "center", justifyContent: "center", paddingTop: space.lg, gap: space.sm },
+  hero: { alignItems: "center", paddingTop: space.xl, gap: space.xs },
   tagline: { color: "#fff", fontFamily: fonts.bold, fontSize: 20, textAlign: "center", lineHeight: 26 },
   sheet: {
     backgroundColor: colors.card,
     marginHorizontal: space.sm,
+    marginBottom: space.sm,
     borderRadius: radius.lg,
     padding: space.lg,
     alignItems: "center",
     gap: space.xs,
   },
-  title: { fontFamily: fonts.black, fontSize: 32, lineHeight: 36, color: colors.navy, textAlign: "center" },
+  title: { fontFamily: fonts.black, fontSize: 34, lineHeight: 37, color: colors.navy, textAlign: "center" },
   text: { fontFamily: fonts.semibold, fontSize: 17, lineHeight: 23, color: colors.text, textAlign: "center" },
 });

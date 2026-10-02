@@ -89,8 +89,8 @@ export default function LessonScreen() {
         {lesson.intro_text ? <Body center>{lesson.intro_text}</Body> : null}
       </View>
       {lesson.mentor_tip ? (
-        <Mentor text={lesson.mentor_tip}>
-          <Illustration name="mentor" size={96} disc={false} />
+        <Mentor text={lesson.mentor_tip} plain>
+          <Illustration name="mentor" width={170} />
         </Mentor>
       ) : null}
       <Text style={{ fontFamily: fonts.bold, color: colors.muted, textAlign: "center" }}>
