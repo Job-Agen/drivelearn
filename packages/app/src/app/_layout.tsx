@@ -39,6 +39,7 @@ function Navigator() {
         <Stack.Screen name="premium" />
         <Stack.Screen name="pass" />
         <Stack.Screen name="pass-confirmed" />
+        <Stack.Screen name="payment/[id]" options={{ gestureEnabled: false }} />
         <Stack.Screen name="delete-account" />
       </Stack.Protected>
       {/* Ouvert depuis le lien de réinitialisation reçu par e-mail, connecté ou non.

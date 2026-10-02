@@ -13,6 +13,7 @@ import pg from "pg";
 import { migrate } from "../../db/src/migrate.js";
 import { createApp } from "../src/app.js";
 import { createTokenVerifier } from "../src/auth.js";
+import type { PaymentGateway } from "../src/paygate.js";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const ISSUER = `http://localhost:${PORT}`;
@@ -29,7 +30,23 @@ type User = { id: string; email: string; password: string; name: string };
 const users = new Map<string, User>(); // e-mail → utilisateur
 const sessions = new Map<string, string>(); // jeton de session → id utilisateur
 
+// Passerelle simulée : chaque paiement est validé « sur le téléphone » 6 secondes après son lancement.
+// Un numéro finissant par 00 simule un refus de l'élève.
+const started = new Map<string, { at: number; phone: string }>();
+const gateway: PaymentGateway = {
+  async initiate(p) {
+    started.set(p.identifier, { at: Date.now(), phone: p.phone });
+    return { txReference: `DEV-${p.identifier.slice(0, 8)}` };
+  },
+  async status(identifier) {
+    const s = started.get(identifier);
+    const status = !s || Date.now() - s.at < 6000 ? "pending" : s.phone.endsWith("00") ? "cancelled" : "paid";
+    return { status, txReference: `DEV-${identifier.slice(0, 8)}`, method: "FLOOZ" };
+  },
+};
+
 const api = createApp({
+  gateway,
   db: pool,
   verifyToken: createTokenVerifier({ keys: jwks, issuer: ISSUER }),
   authAdmin: {

@@ -33,7 +33,9 @@ npm run typecheck
 
 ## Reste à faire
 
-- Paiement du Pass Examen (Flooz, T-Money) : l'écran Examens l'annonce « bientôt ».
+- Paiement : brancher le vrai compte marchand PayGate Global (`PAYGATE_AUTH_TOKEN` dans `.env.local`, puis
+  déclarer l'URL de notification `<API>/webhooks/paygate` dans le tableau de bord PayGate). En local, le serveur de
+  développement simule PayGate : paiement validé 6 s après son lancement, refusé si le numéro finit par 00.
 - Notifications de rappel (jeton push) : la préférence est enregistrée, l'envoi viendra avec le Plan 7.
 - Contenu officiel et images (Plan 4) : `packages/db/seed/demo.sql` n'est qu'une démonstration.
 - Essai sur un vrai téléphone Android contre Neon Auth (cookies de session, vérification d'e-mail).

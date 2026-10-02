@@ -46,6 +46,19 @@ export type SessionResult = {
   question_count?: number;
 };
 
+export type Payment = {
+  id: string;
+  status: "pending" | "confirmed" | "failed";
+  base_amount_xof: number;
+  discount_xof: number;
+  amount_xof: number;
+  failure_reason: string | null;
+  created_at: string;
+  confirmed_at: string | null;
+};
+export type Quote = { base: number; discount: number; amount: number; school: string | null; duration_days: number };
+export type Network = "FLOOZ" | "TMONEY";
+
 export const api = {
   me: () => request<Me>("GET", "/me"),
   updateMe: (patch: Partial<Omit<Me, "id" | "email" | "driving_school_name">> & { push_token?: string | null }) =>
@@ -86,4 +99,9 @@ export const api = {
   saveExamAnswer: (id: string, answer: Answer) =>
     request<void>("PUT", `/exams/${id}/answers/${answer.question_id}`, { choice_ids: answer.choice_ids }),
   submitExam: (id: string) => request<Exam>("POST", `/exams/${id}/submit`),
+
+  quote: () => request<Quote>("GET", "/payments/quote"),
+  payments: () => request<Payment[]>("GET", "/payments"),
+  payment: (id: string) => request<Payment>("GET", `/payments/${id}`),
+  pay: (network: Network, phone_number: string) => request<Payment>("POST", "/payments", { network, phone_number }),
 };

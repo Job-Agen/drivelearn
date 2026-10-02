@@ -4,6 +4,7 @@ import pg from "pg";
 import { createApp } from "./app.js";
 import { createTokenVerifier } from "./auth.js";
 import { createNeonAuthAdmin } from "./neon-auth-admin.js";
+import { createPayGate } from "./paygate.js";
 
 function required(name: string): string {
   const value = process.env[name];
@@ -32,4 +33,5 @@ export default createApp({
   }),
   requireVerifiedEmail: process.env.REQUIRE_VERIFIED_EMAIL !== "false",
   imagesBaseUrl: process.env.IMAGES_BASE_URL ?? null,
+  gateway: createPayGate({ authToken: required("PAYGATE_AUTH_TOKEN") }),
 });
