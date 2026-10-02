@@ -37,7 +37,7 @@ export default function ReportScreen() {
     return (
       <Screen footer={<Button label="Fermer" onPress={() => router.back()} />}>
         <Title>Merci !</Title>
-        <Body>Votre signalement a été transmis. Notre équipe va vérifier cette question.</Body>
+        <Body>Ton signalement a été transmis. Notre équipe va vérifier cette question.</Body>
       </Screen>
     );
   }

@@ -1,8 +1,10 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Text } from "react-native";
+import { Text, View } from "react-native";
 import { auth } from "../../lib/auth";
-import { Body, Button, ErrorText, Screen, Title } from "../../ui/kit";
+import { Illustration } from "../../ui/Illustration";
+import { Body, Button, ErrorText, Link, Screen, Title } from "../../ui/kit";
+import { fonts, space } from "../../ui/theme";
 
 export default function VerifyEmail() {
   const { email } = useLocalSearchParams<{ email: string }>();
@@ -13,7 +15,7 @@ export default function VerifyEmail() {
     setError(null);
     try {
       await auth.sendVerificationEmail(email);
-      setInfo("E-mail renvoyé. Pensez à regarder dans les courriers indésirables.");
+      setInfo("E-mail renvoyé. Pense à regarder dans les courriers indésirables.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Envoi impossible.");
     }
@@ -24,17 +26,19 @@ export default function VerifyEmail() {
       footer={
         <>
           <Button label="J'ai confirmé, me connecter" onPress={() => router.replace("/sign-in")} />
-          <Button label="Renvoyer l'e-mail" variant="ghost" onPress={resend} />
+          <Link label="Renvoyer l'e-mail" onPress={resend} />
         </>
       }
     >
-      <Text style={{ fontSize: 64, textAlign: "center" }}>📬</Text>
-      <Title>Vérifiez votre e-mail</Title>
-      <Body>
-        Nous avons envoyé un lien de confirmation à <Text style={{ fontWeight: "700" }}>{email}</Text>. Ouvrez-le, puis revenez vous
-        connecter.
-      </Body>
-      {info ? <Body muted>{info}</Body> : null}
+      <View style={{ alignItems: "center", gap: space.sm }}>
+        <Illustration name="mailLock" size={200} />
+        <Title center>Vérifie ton e-mail</Title>
+        <Body center>
+          Nous avons envoyé un lien de confirmation à <Text style={{ fontFamily: fonts.extrabold }}>{email}</Text>. Ouvre-le, puis
+          reviens te connecter.
+        </Body>
+      </View>
+      {info ? <Body muted center>{info}</Body> : null}
       <ErrorText>{error}</ErrorText>
     </Screen>
   );

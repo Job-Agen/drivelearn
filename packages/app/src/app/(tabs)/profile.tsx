@@ -44,7 +44,7 @@ export default function ProfileScreen() {
   const confirmDelete = () =>
     Alert.alert(
       "Supprimer mon compte ?",
-      "Votre progression, vos examens et votre Pass seront définitivement effacés. Cette action est irréversible.",
+      "Ta progression, tes examens et ton Pass seront définitivement effacés. Cette action est irréversible.",
       [
         { text: "Annuler", style: "cancel" },
         {
@@ -108,15 +108,15 @@ export default function ProfileScreen() {
 
       <Card>
         <Text style={{ fontWeight: "800", fontSize: 16, color: colors.text }}>Auto-école</Text>
-        <Body muted>{me.driving_school_name ? `Rattaché à ${me.driving_school_name}` : "Vous avez un code promo de votre auto-école ?"}</Body>
+        <Body muted>{me.driving_school_name ? `Rattaché à ${me.driving_school_name}` : "Tu as un code promo de ton auto-école ?"}</Body>
         <Field label="Code promo" value={code} onChangeText={setCode} autoCapitalize="characters" maxLength={20} />
-        <Button label="Appliquer" variant="secondary" onPress={applyCode} disabled={!code.trim()} />
+        <Button label="Appliquer" variant="outline" onPress={applyCode} disabled={!code.trim()} />
       </Card>
 
       {message ? <Body>{message}</Body> : null}
       <ErrorText>{error}</ErrorText>
 
-      <Button label="Se déconnecter" variant="secondary" onPress={signOut} />
+      <Button label="Se déconnecter" variant="outline" onPress={signOut} />
       <Button label="Supprimer mon compte" variant="ghost" onPress={confirmDelete} />
     </Screen>
   );

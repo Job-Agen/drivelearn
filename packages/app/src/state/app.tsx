@@ -41,7 +41,7 @@ type AppContextValue = {
   syncing: boolean;
   lastError: string | null;
   signIn(email: string, password: string): Promise<void>;
-  signUp(email: string, password: string, firstName: string): Promise<void>;
+  signUp(email: string, password: string, firstName?: string): Promise<void>;
   signOut(): Promise<void>;
   deleteAccount(): Promise<void>;
   updateMe(patch: Parameters<typeof api.updateMe>[0]): Promise<void>;
@@ -213,8 +213,9 @@ export function AppProvider({ children }: PropsWithChildren) {
         await auth.signIn(email.trim(), password);
         await afterSignIn();
       },
-      async signUp(email, password, firstName) {
-        await auth.signUp(email.trim(), password, firstName.trim());
+      async signUp(email, password, firstName = "") {
+        // Neon Auth exige un nom : à défaut de prénom, on reprend le début de l'e-mail (le prénom vient à la configuration).
+        await auth.signUp(email.trim(), password, firstName.trim() || email.trim().split("@")[0]);
         // Si la vérification d'e-mail est exigée, la connexion échoue ici avec EMAIL_NOT_VERIFIED.
         await auth.signIn(email.trim(), password);
         await afterSignIn(firstName.trim());

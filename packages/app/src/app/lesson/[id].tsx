@@ -4,15 +4,16 @@ import { Text, View } from "react-native";
 import { buildPath, findLesson, nextLesson, questionIndex, sample } from "../../domain/path";
 import { score } from "../../domain/quiz";
 import { useApp } from "../../state/app";
+import { Illustration } from "../../ui/Illustration";
 import { imageUrl } from "../../ui/images";
-import { Badge, Body, Button, Card, Picture, Screen, Title } from "../../ui/kit";
+import { Body, Button, Mentor, Picture, Screen, Segments, Title, TopBar } from "../../ui/kit";
 import { Quiz } from "../../ui/Quiz";
 import { Results } from "../../ui/Results";
-import { colors, space } from "../../ui/theme";
+import { colors, fonts, space } from "../../ui/theme";
 
-type Phase = { name: "intro" } | { name: "quiz" } | { name: "done"; correct: number; total: number; mistakes: number };
+type Phase = { name: "intro" } | { name: "quiz" } | { name: "done"; correct: number; total: number; mistakes: string[] };
 
-/** Écrans 09 à 12 : explication, quiz, fin de leçon. */
+/** Écrans 09 à 12 : leçon, question, correction, résultat. */
 export default function LessonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { bundle, completed, finishSession, localReview } = useApp();
@@ -39,6 +40,7 @@ export default function LessonScreen() {
     );
   }
   const { lesson, unit } = found;
+  const position = unit.lessons.findIndex((l) => l.id === lesson.id) + 1;
 
   if (phase.name === "quiz") {
     return (
@@ -48,7 +50,7 @@ export default function LessonScreen() {
         onFinish={(state, startedAt) => {
           finishSession({ kind: "lecon", lessonId: lesson.id, startedAt, answers: state.answers });
           const s = score(state);
-          setPhase({ name: "done", correct: s.correct, total: s.total, mistakes: s.mistakes.length });
+          setPhase({ name: "done", correct: s.correct, total: s.total, mistakes: s.mistakes });
         }}
       />
     );
@@ -56,49 +58,44 @@ export default function LessonScreen() {
 
   if (phase.name === "done") {
     const next = nextLesson(buildPath(bundle.content, new Set([...completed, lesson.id])));
+    const openNext = next ? () => router.replace(`/lesson/${next.lesson.id}`) : undefined;
     return (
       <Results
-        title="Leçon terminée !"
+        title="Leçon validée !"
+        xpLabel="Leçon"
         correct={phase.correct}
         total={phase.total}
-        mistakes={phase.mistakes}
-        primary={
-          next
-            ? { label: `Leçon suivante : ${next.lesson.title}`, onPress: () => router.replace(`/lesson/${next.lesson.id}`) }
-            : { label: "Retour au parcours", onPress: () => router.back() }
-        }
-        secondary={next ? { label: "Retour au parcours", onPress: () => router.back() } : undefined}
+        mistakes={phase.mistakes.length}
+        onReview={() => router.replace({ pathname: "/practice", params: { mode: "erreurs", ids: phase.mistakes.join(",") } })}
+        next={openNext ? { label: "Prochaine leçon\ndébloquée", onPress: openNext } : undefined}
+        primary={{ label: "Continuer le parcours", onPress: () => router.back() }}
       />
     );
   }
 
   return (
     <Screen
-      footer={
+      header={
         <>
-          <Button label="Commencer le quiz" onPress={() => setPhase({ name: "quiz" })} />
-          <Button label="Plus tard" variant="ghost" onPress={() => router.back()} />
+          <TopBar onBack={() => router.back()} title={unit.title} right={`${position}/${unit.lessons.length}`} />
+          <Segments total={unit.lessons.length} done={position} />
         </>
       }
+      footer={<Button label="Passer au quiz" onPress={() => setPhase({ name: "quiz" })} />}
     >
-      <Badge label={unit.title} />
-      <Title>{lesson.intro_title ?? lesson.title}</Title>
       <Picture uri={imageUrl(bundle, lesson.intro_image_path)} />
-      {lesson.intro_text ? <Body>{lesson.intro_text}</Body> : null}
+      <View style={{ gap: space.xs }}>
+        <Title center>{lesson.intro_title ?? lesson.title}</Title>
+        {lesson.intro_text ? <Body center>{lesson.intro_text}</Body> : null}
+      </View>
       {lesson.mentor_tip ? (
-        <Card style={{ backgroundColor: colors.accentSoft, borderColor: colors.accentSoft }}>
-          <View style={{ flexDirection: "row", gap: space.sm }}>
-            <Text style={{ fontSize: 28 }}>🧑‍🏫</Text>
-            <View style={{ flex: 1, gap: space.xs }}>
-              <Text style={{ fontWeight: "800", color: "#8A5A00" }}>Le conseil du moniteur</Text>
-              <Body>{lesson.mentor_tip}</Body>
-            </View>
-          </View>
-        </Card>
+        <Mentor text={lesson.mentor_tip}>
+          <Illustration name="mentor" size={96} disc={false} />
+        </Mentor>
       ) : null}
-      <Body muted>
+      <Text style={{ fontFamily: fonts.bold, color: colors.muted, textAlign: "center" }}>
         {questions.length} questions · environ {Math.max(1, Math.round(questions.length * 0.5))} min
-      </Body>
+      </Text>
     </Screen>
   );
 }

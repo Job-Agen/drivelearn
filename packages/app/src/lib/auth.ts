@@ -21,7 +21,7 @@ const MESSAGES: Record<string, string> = {
   PASSWORD_TOO_SHORT: "Le mot de passe doit contenir au moins 8 caractères.",
   PASSWORD_TOO_LONG: "Le mot de passe est trop long.",
   INVALID_EMAIL: "Adresse e-mail invalide.",
-  EMAIL_NOT_VERIFIED: "Vérifiez votre adresse e-mail pour continuer.",
+  EMAIL_NOT_VERIFIED: "Vérifie ton adresse e-mail pour continuer.",
 };
 
 async function loadSession(): Promise<string | null> {
@@ -53,7 +53,7 @@ async function call(path: string, body?: unknown): Promise<{ status: number; jso
   const json = await res.json().catch(() => null);
   if (!res.ok) {
     const code = String(json?.code ?? "auth_error");
-    throw new AppError(code, MESSAGES[code] ?? json?.message ?? "La connexion a échoué. Réessayez.", res.status);
+    throw new AppError(code, MESSAGES[code] ?? json?.message ?? "La connexion a échoué. Réessaie.", res.status);
   }
   return { status: res.status, json, headers: res.headers };
 }
@@ -111,7 +111,7 @@ export const auth = {
     if (!(await loadSession())) throw new AppError("unauthorized", "Connexion requise.", 401);
     const { json, headers } = await call("/token");
     await keepSessionFrom(headers);
-    if (typeof json?.token !== "string") throw new AppError("unauthorized", "Session expirée. Reconnectez-vous.", 401);
+    if (typeof json?.token !== "string") throw new AppError("unauthorized", "Session expirée. Reconnecte-toi.", 401);
     cachedToken = { token: json.token, expiresAt: jwtExpiry(json.token) };
     return json.token;
   },

@@ -64,7 +64,7 @@ export default function ExamsScreen() {
           ) : status.free_exam_available ? (
             <>
               <Badge label="1 examen offert" tone="accent" />
-              <Body>Votre premier examen blanc est gratuit.</Body>
+              <Body>Ton premier examen blanc est gratuit.</Body>
             </>
           ) : (
             <>
@@ -82,7 +82,7 @@ export default function ExamsScreen() {
 
       <Button label="Passer un examen blanc" onPress={start} loading={busy} disabled={!canStart} />
       <ErrorText>{error}</ErrorText>
-      {error && !status ? <Button label="Réessayer" variant="secondary" onPress={load} /> : null}
+      {error && !status ? <Button label="Réessayer" variant="outline" onPress={load} /> : null}
 
       {history.length > 0 ? <Text style={{ fontSize: 18, fontWeight: "800", color: colors.text }}>Historique</Text> : null}
       {history.map((h) => (

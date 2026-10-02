@@ -15,7 +15,7 @@ export default function PathScreen() {
       <Loading />
     ) : (
       <SafeAreaView style={{ flex: 1, padding: space.md, gap: space.md, justifyContent: "center" }}>
-        <Body center>{lastError ?? "Connectez-vous à internet pour télécharger les leçons (une seule fois)."}</Body>
+        <Body center>{lastError ?? "Connecte-toi à internet pour télécharger les leçons (une seule fois)."}</Body>
         <Button label="Réessayer" onPress={refresh} />
       </SafeAreaView>
     );
@@ -54,7 +54,7 @@ export default function PathScreen() {
         ) : path.length > 0 ? (
           <Card>
             <Text style={styles.cardTitle}>🎓 Parcours terminé !</Text>
-            <Body muted>Entraînez-vous maintenant avec les examens blancs.</Body>
+            <Body muted>Entraîne-toi maintenant avec les examens blancs.</Body>
           </Card>
         ) : (
           <Body muted center>

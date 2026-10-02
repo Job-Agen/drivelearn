@@ -31,7 +31,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   if (res.status === 204) return undefined as T;
   const json = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new AppError(json?.error ?? "error", json?.message ?? "Une erreur est survenue. Réessayez.", res.status);
+    throw new AppError(json?.error ?? "error", json?.message ?? "Une erreur est survenue. Réessaie.", res.status);
   }
   return json as T;
 }

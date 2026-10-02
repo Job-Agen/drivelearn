@@ -63,7 +63,7 @@ export default function ExamScreen() {
       setError(null);
     } catch (err) {
       if (err instanceof Error && "code" in err && err.code === "exam_closed") await submit();
-      else setError(err instanceof Error ? err.message : "Réponse non enregistrée. Vérifiez votre connexion.");
+      else setError(err instanceof Error ? err.message : "Réponse non enregistrée. Vérifie ta connexion.");
     } finally {
       advancing.current = false;
       setBusy(false);
@@ -152,7 +152,7 @@ function Correction({ exam }: { exam: Exam }) {
           {exam.score}/{exam.total}
         </Text>
         <Body muted center>
-          {exam.passed ? "Bravo, vous avez atteint le seuil de réussite." : `Il faut au moins ${exam.pass_mark}/${exam.total}. Révisez vos erreurs et réessayez.`}
+          {exam.passed ? "Bravo, tu as atteint le seuil de réussite." : `Il faut au moins ${exam.pass_mark}/${exam.total}. Révise tes erreurs et réessaie.`}
         </Body>
       </View>
       <Subtitle>Correction</Subtitle>

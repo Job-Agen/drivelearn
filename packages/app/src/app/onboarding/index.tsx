@@ -56,7 +56,7 @@ export default function Onboarding() {
       ok: Boolean(programId),
       body: (
         <>
-          <Title>Où passez-vous votre permis ?</Title>
+          <Title>Où passes-tu ton permis ?</Title>
           {(programs ?? []).map((p) => (
             <Pressable
               key={p.id}
@@ -72,7 +72,7 @@ export default function Onboarding() {
               {!p.available ? <Badge label="Bientôt" tone="muted" /> : null}
             </Pressable>
           ))}
-          {!programs ? <Button label="Réessayer" variant="secondary" onPress={loadPrograms} /> : null}
+          {!programs ? <Button label="Réessayer" variant="outline" onPress={loadPrograms} /> : null}
         </>
       ),
     },
@@ -80,8 +80,8 @@ export default function Onboarding() {
       ok: firstName.trim().length > 0,
       body: (
         <>
-          <Title>Comment vous appelez-vous ?</Title>
-          <Body muted>Votre mentor vous encouragera par votre prénom.</Body>
+          <Title>Comment t'appelles-tu ?</Title>
+          <Body muted>Ton moniteur t'encouragera par ton prénom.</Body>
           <Field label="Prénom" value={firstName} onChangeText={setFirstName} maxLength={40} autoFocus />
         </>
       ),
@@ -90,7 +90,7 @@ export default function Onboarding() {
       ok: true,
       body: (
         <>
-          <Title>Quel est votre objectif quotidien ?</Title>
+          <Title>Quel est ton objectif quotidien ?</Title>
           <Body muted>Un peu chaque jour vaut mieux que beaucoup une fois par semaine.</Body>
           {GOALS.map((g) => (
             <Pressable key={g.minutes} onPress={() => setGoal(g.minutes)} style={[styles.choice, goal === g.minutes && styles.choiceOn]}>

@@ -14,10 +14,15 @@ type Result = { correct: number; total: number; mistakes: number };
 
 /** Écrans 13 et 14 : révision de mes erreurs, ou d'un thème. */
 export default function PracticeScreen() {
-  const { mode, unit: unitId } = useLocalSearchParams<{ mode: "erreurs" | "theme"; unit?: string }>();
+  const { mode, unit: unitId, ids } = useLocalSearchParams<{ mode: "erreurs" | "theme"; unit?: string; ids?: string }>();
   const { bundle, finishSession, localReview } = useApp();
   const [questions, setQuestions] = useState<Question[] | null>(null);
   const [result, setResult] = useState<Result | null>(null);
+  const again = () => {
+    setResult(null);
+    setQuestions(null);
+    setRound(round + 1);
+  };
   const [round, setRound] = useState(0);
 
   useEffect(() => {
@@ -28,14 +33,16 @@ export default function PracticeScreen() {
       setQuestions(unit ? sample(unitQuestions(unit), REVIEW_BATCH) : []);
       return;
     }
+    const pick = (list: string[]) => setQuestions(list.map((id) => index.get(id)).filter((q) => q !== undefined));
+    // « Revoir mon erreur » en fin de leçon : exactement les questions ratées, sans attendre le serveur.
+    if (ids && round === 0) return pick(ids.split(","));
     // Mes erreurs : la liste du serveur fait foi ; hors ligne, on se sert du suivi local.
-    const pick = (ids: string[]) => setQuestions(ids.map((id) => index.get(id)).filter((q) => q !== undefined));
     api
       .review(REVIEW_BATCH)
       .then((r) => pick(r.question_ids))
       .catch(() => pick(sample(localReview(), REVIEW_BATCH)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bundle?.version, mode, unitId, round]);
+  }, [bundle?.version, mode, unitId, ids, round]);
 
   if (!questions) return <Loading />;
 
@@ -43,18 +50,13 @@ export default function PracticeScreen() {
     return (
       <Results
         title="Révision terminée !"
+        xpLabel="Révision"
         correct={result.correct}
         total={result.total}
         mistakes={result.mistakes}
+        onReview={mode === "erreurs" ? again : undefined}
+        next={mode === "theme" ? { label: "Encore une\nsérie", onPress: again } : undefined}
         primary={{ label: "Terminer", onPress: () => router.back() }}
-        secondary={{
-          label: "Encore une série",
-          onPress: () => {
-            setResult(null);
-            setQuestions(null);
-            setRound(round + 1);
-          },
-        }}
       />
     );
   }
@@ -63,7 +65,7 @@ export default function PracticeScreen() {
     return (
       <Screen footer={<Button label="Retour" onPress={() => router.back()} />}>
         <Body center>
-          {mode === "erreurs" ? "🎉 Aucune erreur à revoir pour le moment. Continuez le parcours !" : "Pas encore de questions pour ce thème."}
+          {mode === "erreurs" ? "🎉 Aucune erreur à revoir pour le moment. Continue le parcours !" : "Pas encore de questions pour ce thème."}
         </Body>
       </Screen>
     );

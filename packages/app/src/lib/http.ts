@@ -9,7 +9,7 @@ export class AppError extends Error {
   }
 }
 
-export const OFFLINE = new AppError("offline", "Pas de connexion internet. Réessayez quand vous serez en ligne.");
+export const OFFLINE = new AppError("offline", "Pas de connexion internet. Réessaie quand tu seras en ligne.");
 
 export function isOffline(error: unknown): boolean {
   return error instanceof AppError && error.code === "offline";

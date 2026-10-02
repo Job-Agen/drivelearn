@@ -25,7 +25,7 @@ export default function ProgressScreen() {
       >
         <Title>Mes progrès</Title>
         {!progress ? (
-          <Body muted>Connectez-vous à internet pour voir vos progrès.</Body>
+          <Body muted>Connecte-toi à internet pour voir tes progrès.</Body>
         ) : (
           <>
             <Row>
