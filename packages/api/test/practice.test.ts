@@ -71,5 +71,6 @@ describe("révision et progrès", () => {
       await api.request("POST", "/v1/sessions", { user: "user-a", body: { sessions: [session(lessonId, ok.id, ok.correct)] } });
       const res = await api.request("GET", "/v1/progress", { user: "user-a" });
       expect(res.body).toMatchObject({ current_streak: 1, practiced_today: true, total_xp: 15, today_minutes: 2 });
+      expect(res.body.completed_lesson_ids).toEqual([lessonId]);
     }));
 });
