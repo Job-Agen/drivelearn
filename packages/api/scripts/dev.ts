@@ -28,6 +28,10 @@ const jwks = createLocalJWKSet({ keys: [{ ...(await exportJWK(publicKey)), kid: 
 
 type User = { id: string; email: string; password: string; name: string };
 const users = new Map<string, User>(); // e-mail → utilisateur
+// Compte administrateur de développement (site d'administration sur http://localhost:3001)
+const DEV_ADMIN = { id: "dev-admin", email: "admin@drivelearn.tg", password: "admin12345", name: "Admin" };
+users.set(DEV_ADMIN.email, DEV_ADMIN);
+await pool.query("insert into admins (user_id) values ($1) on conflict do nothing", [DEV_ADMIN.id]);
 const sessions = new Map<string, string>(); // jeton de session → id utilisateur
 
 // Passerelle simulée : chaque paiement est validé « sur le téléphone » 6 secondes après son lancement.
@@ -106,6 +110,9 @@ authApp.get("/token", async (c) => {
     .sign(privateKey);
   return c.json({ token });
 });
+
+const publicJwk = { ...(await exportJWK(publicKey)), kid: "dev", alg: "EdDSA" };
+authApp.get("/.well-known/jwks.json", (c) => c.json({ keys: [publicJwk] }));
 
 authApp.post("/sign-out", (c) => {
   sessions.delete(getCookie(c, COOKIE) ?? "");
