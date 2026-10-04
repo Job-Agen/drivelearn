@@ -1,68 +1,68 @@
 import Link from "next/link";
-import { Badge, Flash, QUESTION_STATUS, REPORT_REASON, REPORT_STATUS, date, one } from "@/components/ui";
+import { Button, Card, Flash, inputClass, PageTitle, StatusBadge } from "@/components/ui";
+import { runAction } from "@/lib/actions";
+import { requireAdmin } from "@/lib/admin";
+import { listReports, updateReport, type ReportStatus } from "@/lib/data/reports";
 import { pool } from "@/lib/db";
-import { listReports } from "@/lib/queries";
-import { requireAdmin } from "@/lib/session";
-import { reportAction } from "../actions";
 
-/** Écran 32 — Signalements des élèves : nouveau → en cours → résolu. */
-export default async function ReportsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+const REASONS: Record<string, string> = {
+  reponse_incorrecte: "Réponse incorrecte",
+  explication_peu_claire: "Explication peu claire",
+  probleme_image: "Problème d'image",
+};
+
+async function save(formData: FormData) {
+  "use server";
   await requireAdmin();
-  const status = one((await searchParams).status);
+  const back = String(formData.get("back"));
+  await runAction(back, () =>
+    updateReport(pool, String(formData.get("id")), {
+      status: String(formData.get("status")) as ReportStatus,
+      admin_note: String(formData.get("admin_note") ?? "") || null,
+    }),
+  );
+}
+
+export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ status?: ReportStatus; ok?: string; error?: string }> }) {
+  await requireAdmin();
+  const sp = await searchParams;
+  const status = sp.status ?? "nouveau";
   const reports = await listReports(pool, status);
-  const from = `/signalements${status ? `?status=${status}` : ""}`;
   return (
-    <div className="stack">
-      <div className="page-head">
-        <div>
-          <h1>Signalements</h1>
-          <p className="muted">Questions signalées par les élèves depuis la correction.</p>
-        </div>
-      </div>
-      <div className="tabs">
-        <Link href="/signalements" className={!status ? "on" : undefined}>
-          Tous
-        </Link>
-        {Object.entries(REPORT_STATUS).map(([s, label]) => (
-          <Link key={s} href={`/signalements?status=${s}`} className={status === s ? "on" : undefined}>
-            {label}
+    <>
+      <PageTitle title="Qualité des questions" subtitle="Signalements envoyés par les élèves." />
+      <Flash ok={sp.ok} error={sp.error} />
+      <div className="mb-4 flex gap-2">
+        {(["nouveau", "en_cours", "resolu"] as const).map((s) => (
+          <Link key={s} href={`?status=${s}`} className={`rounded-full px-3 py-1 ${s === status ? "ring-2 ring-bleu" : ""}`}>
+            <StatusBadge status={s} />
           </Link>
         ))}
       </div>
-      <Flash searchParams={searchParams} />
-      {reports.length === 0 ? <p className="muted">Aucun signalement.</p> : null}
+      {reports.length === 0 && <p className="text-sm text-slate-500">Aucun signalement.</p>}
       {reports.map((r) => (
-        <form key={r.id} action={reportAction} className="card stack" style={{ gap: 10 }}>
-          <input type="hidden" name="id" value={r.id} />
-          <input type="hidden" name="from" value={from} />
-          <div className="row" style={{ justifyContent: "space-between" }}>
-            <div className="row">
-              <strong>{REPORT_REASON[r.reason]}</strong>
-              <Badge status={r.status} labels={REPORT_STATUS} />
-              <span className="muted small">{date(r.created_at, true)}</span>
-            </div>
-            <Link href={`/contenus/questions/${r.question_id}`} className="btn secondary small">
-              Ouvrir la question
-            </Link>
+        <Card key={r.id}>
+          <div className="mb-3 flex items-center justify-between">
+            <p className="font-semibold text-nuit">{REASONS[r.reason] ?? r.reason}</p>
+            <span className="text-xs text-slate-500">{new Date(r.created_at).toLocaleDateString("fr-FR")}</span>
           </div>
-          <div>
-            <span className="muted small">{r.unit_title} · </span>
-            <strong>{r.prompt}</strong> <Badge status={r.question_status} labels={QUESTION_STATUS} />
-          </div>
-          {r.comment ? <p>« {r.comment} »</p> : <p className="muted small">Sans commentaire.</p>}
-          <div className="row">
-            <select name="status" defaultValue={r.status} aria-label="Statut">
-              {Object.entries(REPORT_STATUS).map(([s, label]) => (
-                <option key={s} value={s}>
-                  {label}
-                </option>
-              ))}
+          <p className="mb-1 text-sm">
+            Question : <Link href={`/questions/${r.question_id}`} className="text-bleu underline">{r.prompt.slice(0, 100)}</Link>
+          </p>
+          {r.comment && <p className="mb-3 rounded-lg bg-slate-50 p-3 text-sm">{r.comment}</p>}
+          <form action={save} className="flex items-end gap-3">
+            <input type="hidden" name="id" value={r.id} />
+            <input type="hidden" name="back" value={`/signalements?status=${status}`} />
+            <textarea name="admin_note" defaultValue={r.admin_note ?? ""} placeholder="Note de traitement" rows={1} className={inputClass} />
+            <select name="status" defaultValue={r.status} className={`${inputClass} w-40`}>
+              <option value="nouveau">Nouveau</option>
+              <option value="en_cours">En cours</option>
+              <option value="resolu">Résolu</option>
             </select>
-            <input name="note" defaultValue={r.admin_note ?? ""} placeholder="Note de traitement" style={{ flex: 1, minWidth: 200 }} />
-            <button className="btn small">Enregistrer</button>
-          </div>
-        </form>
+            <Button>Enregistrer</Button>
+          </form>
+        </Card>
       ))}
-    </div>
+    </>
   );
 }

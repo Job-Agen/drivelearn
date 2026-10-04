@@ -1,34 +1,49 @@
-import { NavLink } from "@/components/nav-link";
-import { pool } from "@/lib/db";
-import { requireAdmin } from "@/lib/session";
-import { logoutAction } from "./actions";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
+import { requireAdmin } from "@/lib/admin";
+import { auth } from "@/lib/auth/server";
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const admin = await requireAdmin();
-  const { rows } = await pool.query("select count(*)::int as n from question_reports where status <> 'resolu'");
+export const dynamic = "force-dynamic";
+
+const NAV = [
+  ["/", "Tableau de bord"],
+  ["/programmes", "Programmes"],
+  ["/questions", "Contenus"],
+  ["/signalements", "Signalements"],
+  ["/auto-ecoles", "Auto-écoles"],
+  ["/ventes", "Ventes"],
+  ["/reglages", "Réglages"],
+] as const;
+
+async function signOut() {
+  "use server";
+  await auth.signOut();
+  redirect("/auth/sign-in");
+}
+
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+  const { email } = await requireAdmin();
   return (
-    <div className="shell">
-      <aside className="sidebar">
-        <div className="logo">
-          Drive<span>Learn</span>
-        </div>
-        <nav className="nav">
-          <NavLink href="/" label="Tableau de bord" />
-          <NavLink href="/programmes" label="Programmes et examens" />
-          <NavLink href="/contenus" label="Contenus" />
-          <NavLink href="/signalements" label="Signalements" count={rows[0].n} />
-          <NavLink href="/auto-ecoles" label="Auto-écoles" />
-          <NavLink href="/ventes" label="Ventes" />
-          <NavLink href="/reglages" label="Réglages" />
+    <div className="flex min-h-screen">
+      <aside className="w-60 shrink-0 border-r border-slate-200 bg-white p-5">
+        <p className="mb-8 text-xl font-bold text-nuit">
+          Drive<span className="text-sarcelle">Learn</span>
+          <span className="block text-sm font-medium text-slate-500">Admin</span>
+        </p>
+        <nav className="space-y-1">
+          {NAV.map(([href, label]) => (
+            <Link key={href} href={href} className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">
+              {label}
+            </Link>
+          ))}
         </nav>
-        <div className="me">
-          {admin.email}
-          <form action={logoutAction}>
-            <button>Se déconnecter</button>
-          </form>
-        </div>
+        <form action={signOut} className="mt-10 text-xs text-slate-500">
+          <p className="mb-2 truncate">{email}</p>
+          <button className="underline">Se déconnecter</button>
+        </form>
       </aside>
-      <main className="main">{children}</main>
+      <main className="flex-1 p-8">{children}</main>
     </div>
   );
 }

@@ -1,18 +1,25 @@
+import { requireAdmin } from "@/lib/admin";
+import { toCsv } from "@/lib/csv";
+import { currentMonth, listPayments } from "@/lib/data/sales";
 import { pool } from "@/lib/db";
-import { listPayments, paymentsCsv } from "@/lib/queries";
-import { requireAdmin } from "@/lib/session";
 
-/** Export CSV des paiements filtrés (s'ouvre dans Excel). */
 export async function GET(request: Request) {
   await requireAdmin();
   const url = new URL(request.url);
-  const month = /^\d{4}-\d{2}$/.test(url.searchParams.get("month") ?? "") ? url.searchParams.get("month")! : new Date().toISOString().slice(0, 7);
-  const rows = await listPayments(pool, {
-    month,
-    schoolId: url.searchParams.get("school") ?? undefined,
-    status: url.searchParams.get("status") ?? undefined,
-  });
-  return new Response(paymentsCsv(rows), {
+  const month = url.searchParams.get("month") || currentMonth();
+  // Seules les ventes confirmées : les paiements en attente ou échoués n'ont rien rapporté.
+  const payments = await listPayments(pool, { month, schoolId: url.searchParams.get("school") || undefined, confirmedOnly: true });
+  const csv = toCsv(payments, [
+    ["created_at", "Date"],
+    ["confirmed_at", "Confirmé le"],
+    ["email", "Élève"],
+    ["school_name", "Auto-école"],
+    ["base_amount_xof", "Prix (FCFA)"],
+    ["discount_xof", "Réduction (FCFA)"],
+    ["amount_xof", "Payé (FCFA)"],
+    ["commission_xof", "Commission (FCFA)"],
+  ]);
+  return new Response(csv, {
     headers: {
       "content-type": "text/csv; charset=utf-8",
       "content-disposition": `attachment; filename="drivelearn-ventes-${month}.csv"`,

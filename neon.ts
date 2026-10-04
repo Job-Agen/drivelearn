@@ -7,12 +7,14 @@ export default defineConfig({
       name: "DriveLearn API",
       source: "./packages/api/src/function.ts",
       env: {
-        NEON_API_KEY: process.env.NEON_API_KEY!,
+        // Transmise seulement si présente (neon deploy --env .env.production) : une valeur vide supprimerait la variable.
+        ...(process.env.NEON_API_KEY ? { NEON_API_KEY: process.env.NEON_API_KEY } : {}),
         NEON_PROJECT_ID: "young-river-14219375",
         NEON_BRANCH_ID: "br-flat-lake-b12cfxtb",
-        REQUIRE_VERIFIED_EMAIL: "true",
-        // Jeton marchand PayGate Global (tableau de bord PayGate), gardé dans .env.local
-        PAYGATE_AUTH_TOKEN: process.env.PAYGATE_AUTH_TOKEN!,
+        // Temporaire : à repasser à "true" une fois la vérification d'e-mail activée dans Neon Auth.
+        REQUIRE_VERIFIED_EMAIL: "false",
+        // Jeton marchand PayGate Global, transmis seulement s'il est présent (paiement indisponible sinon).
+        ...(process.env.PAYGATE_AUTH_TOKEN ? { PAYGATE_AUTH_TOKEN: process.env.PAYGATE_AUTH_TOKEN } : {}),
       },
     },
   },

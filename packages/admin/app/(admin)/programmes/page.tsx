@@ -1,80 +1,60 @@
 import Link from "next/link";
-import { Badge, Flash, PROGRAM_STATUS } from "@/components/ui";
+import { Button, Card, Field, Flash, inputClass, PageTitle, StatusBadge, tableClass } from "@/components/ui";
+import { runAction } from "@/lib/actions";
+import { requireAdmin } from "@/lib/admin";
+import { createProgram, listPrograms } from "@/lib/data/programs";
 import { pool } from "@/lib/db";
-import { listPrograms } from "@/lib/queries";
-import { requireAdmin } from "@/lib/session";
-import { createProgramAction } from "../actions";
 
-/** Écran 29 — Programmes par pays et permis. */
-export default async function ProgramsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+async function create(formData: FormData) {
+  "use server";
   await requireAdmin();
+  await runAction("/programmes", async () => {
+    const id = await createProgram(pool, {
+      country_code: String(formData.get("country_code")),
+      license_type: String(formData.get("license_type")),
+      name: String(formData.get("name")),
+    });
+    return `/programmes/${id}`;
+  });
+}
+
+export default async function ProgramsPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
+  await requireAdmin();
+  const flash = await searchParams;
   const programs = await listPrograms(pool);
   return (
-    <div className="stack">
-      <div className="page-head">
-        <div>
-          <h1>Programmes et examens</h1>
-          <p className="muted">Un programme = un pays et un type de permis, avec ses propres règles d'examen.</p>
-        </div>
-      </div>
-      <Flash searchParams={searchParams} />
-      <table>
-        <thead>
-          <tr>
-            <th>Programme</th>
-            <th>Statut</th>
-            <th className="num">Leçons</th>
-            <th className="num">Questions validées</th>
-            <th className="num">Examen</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {programs.map((p) => (
-            <tr key={p.id}>
-              <td>
-                <strong>{p.name}</strong>
-                <div className="muted small">
-                  {p.country_code} · permis {p.license_type}
-                </div>
-              </td>
-              <td>
-                <Badge status={p.status} labels={PROGRAM_STATUS} />
-              </td>
-              <td className="num">{p.lessons}</td>
-              <td className="num">
-                {p.validated} / {p.questions}
-              </td>
-              <td className="num">{p.exam_question_count} questions</td>
-              <td className="num">
-                <Link className="btn secondary small" href={`/programmes/${p.id}`}>
-                  Gérer
-                </Link>{" "}
-                <Link className="btn secondary small" href={`/contenus?program=${p.id}`}>
-                  Contenus
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <form action={createProgramAction} className="card row" style={{ alignItems: "flex-end" }}>
-        <label className="field">
-          Code pays
-          <input name="country" placeholder="BJ" maxLength={2} size={4} required />
-        </label>
-        <label className="field">
-          Nom
-          <input name="name" placeholder="Bénin" required />
-        </label>
-        <label className="field">
-          Permis
-          <select name="license" defaultValue="B">
-            <option value="B">Voiture (B)</option>
-          </select>
-        </label>
-        <button className="btn">Ajouter un programme</button>
-      </form>
-    </div>
+    <>
+      <PageTitle title="Programmes pédagogiques" subtitle="Les programmes de code par pays et par permis." />
+      <Flash {...flash} />
+      <Card>
+        <table className={tableClass}>
+          <thead>
+            <tr><th>Pays</th><th>Permis</th><th>Nom</th><th>État</th><th>Leçons</th><th>Questions validées</th><th>En attente</th><th /></tr>
+          </thead>
+          <tbody>
+            {programs.map((p) => (
+              <tr key={p.id} className="border-t border-slate-100">
+                <td>{p.country_code}</td>
+                <td>{p.license_type}</td>
+                <td>{p.name}</td>
+                <td><StatusBadge status={p.status} /></td>
+                <td>{p.lessons}</td>
+                <td>{p.validated_questions}</td>
+                <td>{p.pending_questions}</td>
+                <td><Link className="text-bleu underline" href={`/programmes/${p.id}`}>Ouvrir</Link></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+      <Card title="Nouveau programme">
+        <form action={create} className="grid grid-cols-4 items-end gap-3">
+          <Field label="Code pays"><input name="country_code" required maxLength={2} placeholder="TG" className={inputClass} /></Field>
+          <Field label="Permis"><input name="license_type" required defaultValue="voiture" className={inputClass} /></Field>
+          <Field label="Nom"><input name="name" required placeholder="Togo — Permis voiture" className={inputClass} /></Field>
+          <Button>Créer</Button>
+        </form>
+      </Card>
+    </>
   );
 }

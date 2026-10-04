@@ -1,125 +1,130 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Badge, Flash, PROGRAM_STATUS } from "@/components/ui";
+import { Button, Card, Field, Flash, inputClass, PageTitle, StatusBadge } from "@/components/ui";
+import { runAction } from "@/lib/actions";
+import { requireAdmin } from "@/lib/admin";
+import { examConformity, getProgram } from "@/lib/data/programs";
+import { createLesson, createUnit, deleteLesson, deleteUnit, listUnits, moveItem, renameUnit, updateLesson } from "@/lib/data/units";
 import { pool } from "@/lib/db";
-import { examChecks, getProgram } from "@/lib/queries";
-import { requireAdmin } from "@/lib/session";
-import { examSettingsAction, programStatusAction } from "../../actions";
 
-/** Écran 31 — Paramètres d'examen, répartition par thème et contrôles de conformité. */
-export default async function ProgramPage(props: {
+const text = (f: FormData, k: string) => String(f.get(k) ?? "");
+
+async function unitAction(formData: FormData) {
+  "use server";
+  await requireAdmin();
+  const programId = text(formData, "program_id");
+  await runAction(`/programmes/${programId}`, async () => {
+    const op = text(formData, "op");
+    const unitId = text(formData, "unit_id");
+    if (op === "create") await createUnit(pool, programId, text(formData, "title"));
+    if (op === "rename") await renameUnit(pool, unitId, text(formData, "title"));
+    if (op === "delete") await deleteUnit(pool, unitId);
+    if (op === "up" || op === "down") await moveItem(pool, "unit", unitId, op);
+    if (op === "add_lesson") await createLesson(pool, unitId, text(formData, "title"));
+  });
+}
+
+async function lessonAction(formData: FormData) {
+  "use server";
+  await requireAdmin();
+  const programId = text(formData, "program_id");
+  await runAction(`/programmes/${programId}`, async () => {
+    const op = text(formData, "op");
+    const lessonId = text(formData, "lesson_id");
+    if (op === "save")
+      await updateLesson(pool, lessonId, {
+        title: text(formData, "title"),
+        intro_title: text(formData, "intro_title") || null,
+        intro_text: text(formData, "intro_text") || null,
+        intro_image_path: text(formData, "intro_image_path") || null,
+        mentor_tip: text(formData, "mentor_tip") || null,
+      });
+    if (op === "delete") await deleteLesson(pool, lessonId);
+    if (op === "up" || op === "down") await moveItem(pool, "lesson", lessonId, op);
+  });
+}
+
+export default async function ProgramPage({
+  params,
+  searchParams,
+}: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
   await requireAdmin();
-  const { id } = await props.params;
-  const p = await getProgram(pool, id);
-  if (!p) notFound();
-  const checks = examChecks(
-    { count: p.exam_question_count, passMark: p.exam_pass_mark, seconds: p.exam_seconds_per_question, distribution: p.exam_distribution },
-    p.units,
-  );
-  const minutes = Math.round((p.exam_question_count * p.exam_seconds_per_question) / 60);
-
+  const { id } = await params;
+  const [program, units, flash, conformity] = await Promise.all([
+    getProgram(pool, id),
+    listUnits(pool, id),
+    searchParams,
+    examConformity(pool, id),
+  ]);
   return (
-    <div className="stack">
-      <div className="page-head">
-        <div>
-          <Link href="/programmes" className="small">
-            ← Programmes
-          </Link>
-          <h1>
-            {p.name} <Badge status={p.status} labels={PROGRAM_STATUS} />
-          </h1>
-          <p className="muted">
-            {p.country_code} · permis {p.license_type}
-          </p>
-        </div>
-        <div className="row">
-          <Link className="btn secondary" href={`/contenus?program=${p.id}`}>
-            Contenus
-          </Link>
-          {p.status === "publie" ? (
-            <form action={programStatusAction}>
-              <input type="hidden" name="id" value={p.id} />
-              <input type="hidden" name="status" value="en_validation" />
-              <button className="btn danger">Retirer de la publication</button>
-            </form>
-          ) : (
-            <form action={programStatusAction}>
-              <input type="hidden" name="id" value={p.id} />
-              <input type="hidden" name="status" value="publie" />
-              <button className="btn" disabled={!checks.ok}>
-                Publier
-              </button>
-            </form>
-          )}
-        </div>
-      </div>
-      <Flash searchParams={props.searchParams} />
-      {checks.ok ? (
-        <div className="alert ok">Conforme : la banque de questions validées permet de composer un examen.</div>
-      ) : (
-        <div className="alert warn">
-          À corriger avant publication :
-          <ul style={{ margin: "6px 0 0" }}>
-            {checks.problems.map((problem) => (
-              <li key={problem}>{problem}</li>
-            ))}
-          </ul>
-        </div>
+    <>
+      <PageTitle
+        title={program.name}
+        subtitle={`${program.country_code} · ${program.license_type}`}
+        actions={
+          <div className="flex items-center gap-3">
+            <StatusBadge status={program.status} />
+            <Link href={`/programmes/${id}/examen`} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm">Examen et publication</Link>
+            <Link href={`/questions?program=${id}`} className="rounded-lg bg-sarcelle px-4 py-2 text-sm font-semibold text-white">Questions</Link>
+          </div>
+        }
+      />
+      <Flash {...flash} />
+      {program.status === "publie" && conformity.problems.length > 0 && (
+        <p className="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Attention : ce programme publié n'est plus conforme. {conformity.problems.join(" ")}
+        </p>
       )}
-      <form action={examSettingsAction} className="two">
-        <input type="hidden" name="id" value={p.id} />
-        <div className="card stack">
-          <h2>Format de l'examen</h2>
-          <label className="field">
-            Nombre de questions
-            <input name="count" type="number" min={1} max={100} defaultValue={p.exam_question_count} />
-          </label>
-          <label className="field">
-            Seuil de réussite (bonnes réponses)
-            <input name="passMark" type="number" min={1} max={100} defaultValue={p.exam_pass_mark} />
-          </label>
-          <label className="field">
-            Temps par question (secondes)
-            <input name="seconds" type="number" min={5} max={600} defaultValue={p.exam_seconds_per_question} />
-          </label>
-          <p className="muted small">
-            Actuellement : {p.exam_question_count} questions, admis à {p.exam_pass_mark}, environ {minutes} min. Notation tout ou
-            rien, pas de retour en arrière.
-          </p>
-        </div>
-        <div className="card stack">
-          <h2>Répartition par thème</h2>
-          <p className="muted small">Nombre minimal de questions tirées dans chaque unité ; le reste est tiré au hasard.</p>
-          <table>
-            <thead>
-              <tr>
-                <th>Unité</th>
-                <th className="num">Validées</th>
-                <th className="num">Dans l'examen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {p.units.map((u) => (
-                <tr key={u.id}>
-                  <td>{u.title}</td>
-                  <td className="num">
-                    {u.validated} / {u.total}
-                  </td>
-                  <td className="num">
-                    <input name={`dist_${u.id}`} type="number" min={0} max={100} defaultValue={p.exam_distribution[u.id] ?? 0} style={{ width: 80 }} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button className="btn" style={{ alignSelf: "flex-start" }}>
-            Enregistrer
-          </button>
-        </div>
-      </form>
-    </div>
+      {units.map((unit) => (
+        <Card key={unit.id}>
+          <form action={unitAction} className="mb-4 flex items-end gap-2">
+            <input type="hidden" name="program_id" value={id} />
+            <input type="hidden" name="unit_id" value={unit.id} />
+            <Field label={`Unité ${unit.position}`}><input name="title" defaultValue={unit.title} className={inputClass} /></Field>
+            <Button variant="secondary" name="op" value="rename">Renommer</Button>
+            <Button variant="secondary" name="op" value="up">↑</Button>
+            <Button variant="secondary" name="op" value="down">↓</Button>
+            <Button variant="danger" name="op" value="delete">Supprimer</Button>
+          </form>
+          {unit.lessons.map((lesson) => (
+            <form key={lesson.id} action={lessonAction} className="mb-3 grid grid-cols-2 gap-3 rounded-xl border border-slate-100 p-4">
+              <input type="hidden" name="program_id" value={id} />
+              <input type="hidden" name="lesson_id" value={lesson.id} />
+              <Field label={`Leçon ${lesson.position}`}><input name="title" defaultValue={lesson.title} className={inputClass} /></Field>
+              <Field label="Titre de l'écran d'explication"><input name="intro_title" defaultValue={lesson.intro_title ?? ""} className={inputClass} /></Field>
+              <Field label="Texte d'explication"><textarea name="intro_text" rows={3} defaultValue={lesson.intro_text ?? ""} className={inputClass} /></Field>
+              <div className="space-y-3">
+                <Field label="Conseil du mentor"><input name="mentor_tip" defaultValue={lesson.mentor_tip ?? ""} className={inputClass} /></Field>
+                <Field label="Image (chemin)"><input name="intro_image_path" defaultValue={lesson.intro_image_path ?? ""} className={inputClass} /></Field>
+              </div>
+              <div className="col-span-2 flex items-center gap-2">
+                <Button name="op" value="save">Enregistrer</Button>
+                <Button variant="secondary" name="op" value="up">↑</Button>
+                <Button variant="secondary" name="op" value="down">↓</Button>
+                <Button variant="danger" name="op" value="delete">Supprimer</Button>
+                <span className="ml-auto text-xs text-slate-500">
+                  {Object.entries(lesson.counts).map(([s, n]) => `${n} ${s}`).join(" · ") || "aucune question"}
+                </span>
+              </div>
+            </form>
+          ))}
+          <form action={unitAction} className="flex items-end gap-2">
+            <input type="hidden" name="program_id" value={id} />
+            <input type="hidden" name="unit_id" value={unit.id} />
+            <Field label="Nouvelle leçon"><input name="title" required className={inputClass} /></Field>
+            <Button variant="secondary" name="op" value="add_lesson">Ajouter la leçon</Button>
+          </form>
+        </Card>
+      ))}
+      <Card title="Nouvelle unité">
+        <form action={unitAction} className="flex items-end gap-2">
+          <input type="hidden" name="program_id" value={id} />
+          <Field label="Titre"><input name="title" required placeholder="Signalisation" className={inputClass} /></Field>
+          <Button name="op" value="create">Ajouter l'unité</Button>
+        </form>
+      </Card>
+    </>
   );
 }

@@ -1,36 +1,42 @@
-import { Flash } from "@/components/ui";
+import { Button, Card, Field, Flash, inputClass, PageTitle } from "@/components/ui";
+import { runAction } from "@/lib/actions";
+import { requireAdmin } from "@/lib/admin";
+import { getSettings, updateSettings, type SettingsValues } from "@/lib/data/settings";
 import { pool } from "@/lib/db";
-import { SETTINGS, getSettings } from "@/lib/queries";
-import { requireAdmin } from "@/lib/session";
-import { settingsAction } from "../actions";
 
-/** Réglages globaux : prix et durée du Pass, XP, critère « prêt pour l'examen ». */
-export default async function SettingsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+const LABELS: Record<keyof SettingsValues, string> = {
+  pass_price_xof: "Prix du Pass Examen (FCFA)",
+  pass_duration_days: "Durée du Pass (jours)",
+  xp_per_session: "XP par séance",
+  xp_perfect_bonus: "Bonus XP sans faute",
+  ready_after_consecutive_passes: "Réussites consécutives pour « Prêt pour l'examen »",
+  max_review_per_lesson: "Erreurs réinjectées par leçon",
+};
+const KEYS = Object.keys(LABELS) as (keyof SettingsValues)[];
+
+async function save(formData: FormData) {
+  "use server";
   await requireAdmin();
-  const values = await getSettings(pool);
+  await runAction("/reglages", () =>
+    updateSettings(pool, Object.fromEntries(KEYS.map((k) => [k, Number(formData.get(k))])) as SettingsValues),
+  );
+}
+
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
+  await requireAdmin();
+  const [settings, flash] = await Promise.all([getSettings(pool), searchParams]);
   return (
-    <div className="stack">
-      <div className="page-head">
-        <div>
-          <h1>Réglages</h1>
-          <p className="muted">Pris en compte immédiatement : le prix s'applique aux prochains paiements.</p>
-        </div>
-      </div>
-      <Flash searchParams={searchParams} />
-      <form action={settingsAction} className="card stack" style={{ maxWidth: 560 }}>
-        {Object.entries(SETTINGS).map(([key, def]) => (
-          <label key={key} className="field">
-            {def.label}
-            <span className="row" style={{ gap: 8 }}>
-              <input name={key} type="number" min={def.min} max={def.max} defaultValue={values[key]} style={{ width: 160 }} />
-              <span className="muted">{def.unit}</span>
-            </span>
-          </label>
-        ))}
-        <button className="btn" style={{ alignSelf: "flex-start" }}>
-          Enregistrer
-        </button>
-      </form>
-    </div>
+    <>
+      <PageTitle title="Réglages" subtitle="Valeurs communes à tous les programmes." />
+      <Flash {...flash} />
+      <Card>
+        <form action={save} className="grid max-w-2xl grid-cols-2 gap-4">
+          {KEYS.map((k) => (
+            <Field key={k} label={LABELS[k]}><input name={k} type="number" defaultValue={settings[k]} className={inputClass} /></Field>
+          ))}
+          <div className="col-span-2"><Button>Enregistrer</Button></div>
+        </form>
+      </Card>
+    </>
   );
 }

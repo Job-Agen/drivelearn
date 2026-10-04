@@ -1,70 +1,53 @@
 import Link from "next/link";
-import { QUESTION_STATUS, fcfa } from "@/components/ui";
+import { Card, PageTitle } from "@/components/ui";
+import { requireAdmin } from "@/lib/admin";
+import { getDashboard } from "@/lib/data/dashboard";
 import { pool } from "@/lib/db";
-import { dashboard } from "@/lib/queries";
-import { requireAdmin } from "@/lib/session";
 
-export default async function DashboardPage() {
-  await requireAdmin();
-  const d = (await dashboard(pool))!;
-  const toReview = d.questions.en_validation + d.questions.a_verifier;
-  return (
-    <div className="stack">
-      <div className="page-head">
-        <div>
-          <h1>Tableau de bord</h1>
-          <p className="muted">Vue d'ensemble de DriveLearn.</p>
-        </div>
-      </div>
-      <div className="grid">
-        <Stat value={d.students} label="Élèves inscrits" detail={`+${d.students_week} cette semaine`} />
-        <Stat value={d.active_passes} label="Pass Examen actifs" />
-        <Stat value={d.month_sales} label="Ventes du mois" detail={fcfa(d.month_revenue)} />
-        <Stat value={fcfa(d.month_commission)} label="Commissions du mois" href="/ventes" />
-      </div>
-      <div className="two">
-        <div className="card">
-          <h2>Questions par statut</h2>
-          <table>
-            <tbody>
-              {Object.entries(QUESTION_STATUS).map(([status, label]) => (
-                <tr key={status}>
-                  <td>
-                    <span className={`badge b-${status}`}>{label}</span>
-                  </td>
-                  <td className="num">
-                    <strong>{d.questions[status as keyof typeof d.questions] ?? 0}</strong>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="stack">
-          <div className="card">
-            <h2>À traiter</h2>
-            <div className="stack">
-              <Link href="/signalements?status=nouveau">
-                <strong>{d.open_reports}</strong> signalement{d.open_reports > 1 ? "s" : ""} ouvert{d.open_reports > 1 ? "s" : ""}
-              </Link>
-              <Link href="/contenus?status=en_validation">
-                <strong>{toReview}</strong> question{toReview > 1 ? "s" : ""} à valider ou vérifier
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+const STATUS_LABELS = [
+  ["brouillon", "Brouillon"],
+  ["a_verifier", "À vérifier"],
+  ["en_validation", "En validation"],
+  ["validee", "Validée"],
+] as const;
 
-function Stat({ value, label, detail, href }: { value: number | string; label: string; detail?: string; href?: string }) {
+function Stat({ label, value, href }: { label: string; value: string | number; href?: string }) {
   const body = (
-    <div className="card stat">
-      <span className="value">{value}</span>
-      <span className="label">{label}</span>
-      {detail ? <span className="muted small">{detail}</span> : null}
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="mt-1 text-3xl font-bold text-nuit">{value}</p>
     </div>
   );
   return href ? <Link href={href}>{body}</Link> : body;
+}
+
+export default async function Dashboard() {
+  await requireAdmin();
+  const d = await getDashboard(pool);
+  return (
+    <>
+      <PageTitle title="Tableau de bord" />
+      <div className="mb-6 grid grid-cols-4 gap-4">
+        <Stat label="Élèves inscrits" value={d.students} />
+        <Stat label="Questions validées" value={d.questions.validee ?? 0} href="/questions?status=validee" />
+        <Stat label="Signalements ouverts" value={d.open_reports} href="/signalements" />
+        <Stat label="Ventes du mois" value={d.month.sales} href="/ventes" />
+      </div>
+      <Card title="Questions par statut">
+        <div className="flex gap-6 text-sm">
+          {STATUS_LABELS.map(([s, label]) => (
+            <Link key={s} href={`/questions?status=${s}`} className="text-bleu underline">
+              {label} : {d.questions[s] ?? 0}
+            </Link>
+          ))}
+        </div>
+      </Card>
+      <Card title="Ce mois-ci">
+        <p className="text-sm">
+          Chiffre d'affaires : <b>{d.month.revenue_xof.toLocaleString("fr-FR")} FCFA</b> · Commissions dues :{" "}
+          <b>{d.month.commission_xof.toLocaleString("fr-FR")} FCFA</b>
+        </p>
+      </Card>
+    </>
+  );
 }

@@ -1,101 +1,70 @@
-import Link from "next/link";
-import { Flash, fcfa, one } from "@/components/ui";
+import { Button, Card, Field, Flash, inputClass, PageTitle } from "@/components/ui";
+import { runAction } from "@/lib/actions";
+import { requireAdmin } from "@/lib/admin";
+import { createSchool, listSchools, updateSchool } from "@/lib/data/schools";
 import { pool } from "@/lib/db";
-import { listSchools } from "@/lib/queries";
-import { requireAdmin } from "@/lib/session";
-import { saveSchoolAction } from "../actions";
 
-/** Auto-écoles partenaires : code promo, réduction pour l'élève, commission. */
-export default async function SchoolsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+async function create(formData: FormData) {
+  "use server";
   await requireAdmin();
-  const editId = one((await searchParams).edit);
-  const schools = await listSchools(pool);
-  const editing = schools.find((s) => s.id === editId);
+  await runAction("/auto-ecoles", async () => {
+    await createSchool(pool, {
+      name: String(formData.get("name")),
+      promo_code: String(formData.get("promo_code")),
+      discount_percent: Number(formData.get("discount_percent")),
+      commission_percent: Number(formData.get("commission_percent")),
+    });
+  });
+}
+
+async function update(formData: FormData) {
+  "use server";
+  await requireAdmin();
+  await runAction("/auto-ecoles", () =>
+    updateSchool(pool, String(formData.get("id")), {
+      name: String(formData.get("name")),
+      discount_percent: Number(formData.get("discount_percent")),
+      commission_percent: Number(formData.get("commission_percent")),
+      active: formData.get("active") === "on",
+    }),
+  );
+}
+
+export default async function SchoolsPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
+  await requireAdmin();
+  const [schools, flash] = await Promise.all([listSchools(pool), searchParams]);
   return (
-    <div className="stack">
-      <div className="page-head">
-        <div>
-          <h1>Auto-écoles</h1>
-          <p className="muted">Chaque auto-école diffuse son code promo : l'élève obtient une réduction, l'auto-école une commission sur la vente.</p>
+    <>
+      <PageTitle title="Auto-écoles partenaires" subtitle="Codes promo, réductions et commissions." />
+      <Flash {...flash} />
+      <Card>
+        <div className="mb-2 grid grid-cols-8 gap-2 px-1 text-xs font-medium text-slate-500">
+          <span>Nom</span><span>Code</span><span>Réduction %</span><span>Commission %</span><span>Active</span><span>Élèves</span><span>Ventes</span><span />
         </div>
-      </div>
-      <Flash searchParams={searchParams} />
-      <table>
-        <thead>
-          <tr>
-            <th>Auto-école</th>
-            <th>Code promo</th>
-            <th className="num">Réduction</th>
-            <th className="num">Commission</th>
-            <th className="num">Élèves</th>
-            <th className="num">Ventes</th>
-            <th className="num">Commissions</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {schools.map((s) => (
-            <tr key={s.id}>
-              <td>
-                <strong>{s.name}</strong> {s.active ? null : <span className="badge b-inactif">Inactive</span>}
-              </td>
-              <td>
-                <code>{s.promo_code}</code>
-              </td>
-              <td className="num">{s.discount_percent} %</td>
-              <td className="num">{s.commission_percent} %</td>
-              <td className="num">{s.students}</td>
-              <td className="num">{s.sales}</td>
-              <td className="num">{fcfa(s.commission)}</td>
-              <td className="num">
-                <Link className="btn secondary small" href={`/auto-ecoles?edit=${s.id}`}>
-                  Modifier
-                </Link>
-              </td>
-            </tr>
-          ))}
-          {schools.length === 0 ? (
-            <tr>
-              <td colSpan={8} className="muted">
-                Aucune auto-école pour l'instant.
-              </td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
-      <form action={saveSchoolAction} className="card stack" key={editing?.id ?? "new"}>
-        <h2>{editing ? `Modifier « ${editing.name} »` : "Nouvelle auto-école"}</h2>
-        <input type="hidden" name="id" value={editing?.id ?? ""} />
-        <div className="row" style={{ alignItems: "flex-end" }}>
-          <label className="field" style={{ flex: 2, minWidth: 200 }}>
-            Nom
-            <input name="name" defaultValue={editing?.name ?? ""} required />
-          </label>
-          <label className="field">
-            Code promo
-            <input name="promoCode" defaultValue={editing?.promo_code ?? ""} placeholder="LOME10" style={{ textTransform: "uppercase" }} required />
-          </label>
-          <label className="field">
-            Réduction (%)
-            <input name="discount" type="number" min={0} max={100} defaultValue={editing?.discount_percent ?? 10} />
-          </label>
-          <label className="field">
-            Commission (%)
-            <input name="commission" type="number" min={0} max={100} defaultValue={editing?.commission_percent ?? 10} />
-          </label>
-          <label className="row" style={{ gap: 6, fontWeight: 700 }}>
-            <input type="checkbox" name="active" defaultChecked={editing?.active ?? true} /> Active
-          </label>
-        </div>
-        <div className="row">
-          <button className="btn">{editing ? "Enregistrer" : "Créer"}</button>
-          {editing ? (
-            <Link href="/auto-ecoles" className="btn secondary">
-              Annuler
-            </Link>
-          ) : null}
-        </div>
-      </form>
-    </div>
+        {schools.map((s) => (
+          <form key={s.id} action={update} className="mb-2 grid grid-cols-8 items-center gap-2 border-t border-slate-100 pt-2 text-sm">
+            <input type="hidden" name="id" value={s.id} />
+            <input name="name" defaultValue={s.name} className={inputClass} />
+            <span className="font-mono">{s.promo_code}</span>
+            <input name="discount_percent" type="number" min={0} max={100} defaultValue={s.discount_percent} className={inputClass} />
+            <input name="commission_percent" type="number" min={0} max={100} defaultValue={s.commission_percent} className={inputClass} />
+            <input name="active" type="checkbox" defaultChecked={s.active} />
+            <span>{s.students}</span>
+            <span>{s.confirmed_sales}</span>
+            <Button variant="secondary">Enregistrer</Button>
+          </form>
+        ))}
+        {schools.length === 0 && <p className="text-sm text-slate-500">Aucune auto-école pour l'instant.</p>}
+      </Card>
+      <Card title="Nouvelle auto-école">
+        <form action={create} className="grid grid-cols-5 items-end gap-3">
+          <Field label="Nom"><input name="name" required className={inputClass} /></Field>
+          <Field label="Code promo"><input name="promo_code" required placeholder="VOLANT" className={inputClass} /></Field>
+          <Field label="Réduction %"><input name="discount_percent" type="number" min={0} max={100} defaultValue={10} className={inputClass} /></Field>
+          <Field label="Commission %"><input name="commission_percent" type="number" min={0} max={100} defaultValue={10} className={inputClass} /></Field>
+          <Button>Créer</Button>
+        </form>
+      </Card>
+    </>
   );
 }
