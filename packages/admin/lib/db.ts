@@ -1,17 +1,27 @@
 import "server-only";
 import pg from "pg";
 
+function databaseUrl(): string {
+  const url = process.env.DATABASE_URL;
+  if (url) return url;
+  if (process.env.NODE_ENV === "production") throw new Error("Variable d'environnement manquante : DATABASE_URL");
+  return "postgres://postgres:postgres@localhost:5432/drivelearn_dev";
+}
+
 export type Queryable = { query(text: string, values?: unknown[]): Promise<{ rows: any[]; rowCount: number | null }> };
 
-// Un seul pool par processus (survit au rechargement à chaud en développement).
+// Un seul pool par processus (survit au rechargement à chaud en développement), créé à la première requête :
+// le build n'a pas besoin de la base.
 const g = globalThis as unknown as { __adminPool?: pg.Pool };
-export const pool =
-  g.__adminPool ??
-  new pg.Pool({
-    connectionString: process.env.DATABASE_URL ?? "postgres://postgres:postgres@localhost:5432/drivelearn_dev",
-    max: 5,
-  });
-g.__adminPool = pool;
+function getPool(): pg.Pool {
+  g.__adminPool ??= new pg.Pool({ connectionString: databaseUrl(), max: 5 });
+  return g.__adminPool;
+}
+
+export const pool = {
+  query: (text: string, values?: unknown[]) => getPool().query(text, values),
+  connect: () => getPool().connect(),
+};
 
 /** Plusieurs requêtes atomiques (enregistrement d'une question et de ses choix, validation…). */
 export async function transaction<T>(fn: (db: Queryable) => Promise<T>): Promise<T> {

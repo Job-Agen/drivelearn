@@ -5,10 +5,17 @@ import { redirect } from "next/navigation";
 import { pool } from "./db";
 import { isAdmin } from "./queries";
 
+function missing(name: string): never {
+  throw new Error(`Variable d'environnement manquante : ${name}`);
+}
+
 // Connexion des administrateurs : identifiants vérifiés par Neon Auth (comme l'app élève), puis présence
 // dans la table `admins`. Le site garde ensuite sa propre session signée, valable 8 heures.
 
-const AUTH_URL = (process.env.NEON_AUTH_BASE_URL ?? "http://localhost:8787/auth").replace(/\/$/, "");
+function authUrl(): string {
+  const url = process.env.NEON_AUTH_BASE_URL ?? (process.env.NODE_ENV === "production" ? missing("NEON_AUTH_BASE_URL") : "http://localhost:8787/auth");
+  return url.replace(/\/$/, "");
+}
 /** Origine déclarée comme domaine de confiance dans Neon Auth. */
 const ADMIN_ORIGIN = process.env.ADMIN_ORIGIN ?? "https://admin.drivelearn.tg";
 const COOKIE = "dl_admin";
@@ -20,12 +27,16 @@ function secret(): Uint8Array {
   return new TextEncoder().encode(value ?? "secret-de-developpement-uniquement-0123456789");
 }
 
-const jwks = createRemoteJWKSet(new URL(process.env.NEON_AUTH_JWKS_URL ?? `${AUTH_URL}/.well-known/jwks.json`));
+let jwks: ReturnType<typeof createRemoteJWKSet> | undefined;
+function keys() {
+  jwks ??= createRemoteJWKSet(new URL(process.env.NEON_AUTH_JWKS_URL ?? `${authUrl()}/.well-known/jwks.json`));
+  return jwks;
+}
 
 export type Admin = { userId: string; email: string };
 
 async function neonAuth(path: string, init: { body?: unknown; cookie?: string }) {
-  const res = await fetch(`${AUTH_URL}${path}`, {
+  const res = await fetch(`${authUrl()}${path}`, {
     method: init.body === undefined ? "GET" : "POST",
     headers: { "content-type": "application/json", origin: ADMIN_ORIGIN, ...(init.cookie ? { cookie: init.cookie } : {}) },
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
@@ -54,7 +65,7 @@ export async function login(email: string, password: string): Promise<string | n
 
   let userId: string;
   try {
-    const { payload } = await jwtVerify(token.json.token, jwks, { issuer: new URL(AUTH_URL).origin });
+    const { payload } = await jwtVerify(token.json.token, keys(), { issuer: new URL(authUrl()).origin });
     userId = String(payload.sub);
   } catch {
     return "Connexion impossible.";
