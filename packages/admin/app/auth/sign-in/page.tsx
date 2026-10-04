@@ -19,6 +19,9 @@ export default function SignInPage() {
         <button disabled={pending} className="w-full rounded-lg bg-sarcelle py-2 font-semibold text-white">
           {pending ? "Connexion…" : "Se connecter"}
         </button>
+        <p className="text-center text-sm">
+          <Link href="/auth/mot-de-passe" className="text-bleu underline">Premier accès ou mot de passe oublié ?</Link>
+        </p>
         <p className="text-center text-sm text-slate-500">
           Pas encore de compte ? <Link href="/auth/sign-up" className="text-bleu underline">Créer un compte</Link>
         </p>

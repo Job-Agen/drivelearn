@@ -53,8 +53,14 @@ export function practiceRoutes(deps: Deps) {
   });
 
   r.get("/progress", async (c) => {
-    const result = await row<{ progress: unknown }>(deps.db, "select get_progress($1) as progress", [c.get("userId")]);
-    return c.json(result?.progress);
+    const userId = c.get("userId");
+    const result = await row<{ progress: Record<string, unknown> }>(deps.db, "select get_progress($1) as progress", [userId]);
+    // Leçons terminées : l'app en déduit le parcours débloqué, même après une réinstallation.
+    const { rows } = await deps.db.query(
+      "select distinct lesson_id from practice_sessions where user_id = $1 and kind = 'lecon' and lesson_id is not null",
+      [userId],
+    );
+    return c.json({ ...result?.progress, completed_lesson_ids: rows.map((r: { lesson_id: string }) => r.lesson_id) });
   });
 
   return r;

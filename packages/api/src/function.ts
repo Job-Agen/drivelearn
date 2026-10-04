@@ -4,6 +4,7 @@ import pg from "pg";
 import { createApp } from "./app.js";
 import { createTokenVerifier } from "./auth.js";
 import { createNeonAuthAdmin } from "./neon-auth-admin.js";
+import { GatewayError, createPayGate, type PaymentGateway } from "./paygate.js";
 
 function required(name: string): string {
   const value = process.env[name];
@@ -39,4 +40,13 @@ export default createApp({
       },
   requireVerifiedEmail: process.env.REQUIRE_VERIFIED_EMAIL !== "false",
   imagesBaseUrl: process.env.IMAGES_BASE_URL ?? null,
+  // Sans jeton PayGate, tout fonctionne sauf le paiement du Pass (502 « pas encore disponible »).
+  gateway: process.env.PAYGATE_AUTH_TOKEN ? createPayGate({ authToken: process.env.PAYGATE_AUTH_TOKEN }) : paymentsUnavailable(),
 });
+
+function paymentsUnavailable(): PaymentGateway {
+  const fail = async (): Promise<never> => {
+    throw new GatewayError("gateway_unavailable", "Le paiement n'est pas encore disponible. Réessaie plus tard.");
+  };
+  return { initiate: fail, status: fail };
+}

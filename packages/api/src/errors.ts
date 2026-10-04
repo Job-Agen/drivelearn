@@ -26,6 +26,8 @@ const BUSINESS_ERRORS: Record<string, [number, string]> = {
   invalid_promo_code: [400, "Code promo invalide."],
   promo_locked: [409, "Le code promo ne peut plus être modifié après un achat."],
   too_many_reports: [429, "Trop de signalements aujourd'hui. Réessayez demain."],
+  payment_not_found: [404, "Paiement introuvable."],
+  amount_mismatch: [409, "Le montant payé ne correspond pas."],
 };
 
 const INVALID_INPUT_SQLSTATES = new Set(["23514", "23503", "22P02", "22007", "22008"]);

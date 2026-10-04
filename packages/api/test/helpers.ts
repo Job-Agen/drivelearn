@@ -2,7 +2,37 @@ import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT } from "jose";
 import { withTx, type Db } from "../../db/test/helpers.js";
 import { createApp } from "../src/app.js";
 import { createTokenVerifier } from "../src/auth.js";
+import type { GatewayStatus, Network, PaymentGateway } from "../src/paygate.js";
+import { GatewayError } from "../src/paygate.js";
 import type { Queryable } from "../src/types.js";
+
+/** Passerelle simulée : on décide du statut renvoyé par « PayGate » pour chaque paiement. */
+export type FakeGateway = PaymentGateway & {
+  initiated: { identifier: string; amount: number; phone: string; network: Network }[];
+  remote: Map<string, GatewayStatus>;
+  failNext: "invalid_phone" | "gateway_unavailable" | null;
+};
+
+export function fakeGateway(): FakeGateway {
+  const g: FakeGateway = {
+    initiated: [],
+    remote: new Map(),
+    failNext: null,
+    async initiate(p) {
+      if (g.failNext) {
+        const code = g.failNext;
+        g.failNext = null;
+        throw new GatewayError(code, code === "invalid_phone" ? "Numéro invalide." : "Passerelle indisponible.");
+      }
+      g.initiated.push(p);
+      return { txReference: `TX-${p.identifier.slice(0, 8)}` };
+    },
+    async status(identifier) {
+      return { status: g.remote.get(identifier) ?? "pending", txReference: `TX-${identifier.slice(0, 8)}`, method: "FLOOZ" };
+    },
+  };
+  return g;
+}
 
 export const TEST_ISSUER = "https://auth.drivelearn.test";
 
@@ -50,6 +80,7 @@ export type TestApi = {
   /** Envoie un corps brut, tel quel (pour tester un JSON mal formé). */
   raw(method: string, path: string, body: string, token: string): Promise<TestResponse>;
   deleted: string[];
+  gateway: FakeGateway;
 };
 
 /** Application complète branchée sur une transaction annulée à la fin du test. */
@@ -59,7 +90,9 @@ export function withApp<T>(
 ): Promise<T> {
   return withTx(async (db) => {
     const deleted: string[] = [];
+    const gateway = fakeGateway();
     const app = createApp({
+      gateway,
       db: statementAtomic(db),
       verifyToken: createTokenVerifier({ keys: jwks, issuer: TEST_ISSUER }),
       authAdmin: {
@@ -92,6 +125,6 @@ export function withApp<T>(
       const text = await res.text();
       return { status: res.status, body: text ? JSON.parse(text) : null };
     };
-    return fn({ request, raw, deleted }, db);
+    return fn({ request, raw, deleted, gateway }, db);
   });
 }
