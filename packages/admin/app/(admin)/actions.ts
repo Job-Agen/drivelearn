@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { pool, transaction } from "@/lib/db";
 import * as q from "@/lib/queries";
-import { login, logout, requireAdmin } from "@/lib/session";
+import { login, logout, requestPasswordReset, requireAdmin, resetPassword } from "@/lib/session";
 
 // Chaque action vérifie l'administrateur, puis revient sur la page avec un message (?ok=… ou ?error=…).
 
@@ -38,6 +38,22 @@ export async function loginAction(_: LoginState, form: FormData): Promise<LoginS
   const error = await login(text(form, "email"), text(form, "password"));
   if (error) return { error, email: text(form, "email") };
   redirect("/");
+}
+
+export async function requestResetAction(_: string | null, form: FormData): Promise<string | null> {
+  const email = text(form, "email");
+  if (!email.includes("@")) return "Adresse e-mail invalide.";
+  await requestPasswordReset(email);
+  return "Si ce compte existe, un lien vient d'être envoyé à cette adresse. Pense à regarder dans les courriers indésirables.";
+}
+
+export async function resetPasswordAction(_: string | null, form: FormData): Promise<string | null> {
+  const password = text(form, "password");
+  if (password.length < 8) return "Le mot de passe doit contenir au moins 8 caractères.";
+  if (password !== text(form, "confirm")) return "Les deux mots de passe ne sont pas identiques.";
+  const error = await resetPassword(text(form, "token"), password);
+  if (error) return error;
+  redirect(`/login?ok=${encodeURIComponent("Mot de passe enregistré. Tu peux te connecter.")}`);
 }
 
 export async function logoutAction() {

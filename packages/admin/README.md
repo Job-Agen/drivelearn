@@ -16,6 +16,13 @@ insert into admins (user_id) select id from neon_auth."user" where email = 'pren
 
 Retirer la ligne retire l'accès immédiatement.
 
+Un compte créé sans mot de passe (par exemple depuis la console Neon) choisit le sien depuis la page de
+connexion : « Premier accès ou mot de passe oublié ? » envoie un lien qui ouvre `/nouveau-mot-de-passe`.
+L'adresse du site (`ADMIN_ORIGIN`) doit figurer dans les domaines de confiance de Neon Auth pour que ce lien
+soit accepté.
+
+Administrateur actuel : `drivelearn75@gmail.com`.
+
 ## Variables d'environnement (Vercel)
 
 | Variable | Rôle |

@@ -77,6 +77,22 @@ export async function login(email: string, password: string): Promise<string | n
   return null;
 }
 
+/** Envoie le lien « choisir un mot de passe » (premier accès ou oubli). Ne révèle pas si le compte existe. */
+export async function requestPasswordReset(email: string): Promise<void> {
+  await neonAuth("/request-password-reset", {
+    body: { email: email.trim(), redirectTo: `${ADMIN_ORIGIN}/nouveau-mot-de-passe` },
+  }).catch(() => null);
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<string | null> {
+  try {
+    const res = await neonAuth("/reset-password", { body: { token, newPassword } });
+    return res.ok ? null : "Ce lien n'est plus valable. Demande un nouveau lien.";
+  } catch {
+    return "Service de connexion injoignable.";
+  }
+}
+
 export async function logout() {
   (await cookies()).delete(COOKIE);
 }
