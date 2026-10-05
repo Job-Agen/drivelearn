@@ -1,11 +1,37 @@
 @import "tailwindcss";
 
+/* Mêmes couleurs et même police que l'application élève. */
 @theme {
-  --color-nuit: #0b1f5c;
-  --color-bleu: #1565e8;
-  --color-sarcelle: #10a3a3;
+  --color-nuit: #0b2a6f;
+  --color-texte: #1f2d4d;
+  --color-gris: #5a6b8c;
+  --color-bleu: #1565c0;
+  --color-bleu-vif: #1e7fe0;
+  --color-bleu-doux: #e6f1fc;
+  --color-sarcelle: #13a29a;
+  --color-sarcelle-fonce: #0c8079;
+  --color-sarcelle-doux: #e3f6f4;
+  --color-ambre-doux: #fff4d6;
+  --color-ambre: #8a5a00;
+  --color-rouge: #e5484d;
+  --color-rouge-doux: #fdecec;
+  --color-bord: #d9e5f1;
+  --color-fond: #f7fbfe;
+  --font-sans: var(--font-nunito), system-ui, sans-serif;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900;
+  @apply bg-fond text-[15px] text-texte;
+}
+
+/* Tableaux : en-têtes en petites capitales sur fond bleuté, lignes séparées. */
+table th {
+  @apply bg-[#f1f6fc] text-xs font-extrabold tracking-wide text-gris uppercase;
+}
+table tbody tr {
+  @apply border-t border-bord hover:bg-[#fafcff];
+}
+
+input[type="checkbox"] {
+  @apply size-[18px] accent-sarcelle;
 }

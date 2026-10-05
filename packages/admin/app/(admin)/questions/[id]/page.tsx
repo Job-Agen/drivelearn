@@ -95,12 +95,12 @@ export default async function QuestionEditor({
       />
       <Flash ok={sp.ok} error={sp.error} />
       {problems.length > 0 && (
-        <p className="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="mb-4 rounded-xl bg-ambre-doux px-4 py-3 font-bold text-ambre">
           Attention : le programme publié n'est plus conforme. {problems.join(" ")}
         </p>
       )}
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div>
           <Card>
             <form action={save} className="space-y-4">
               <input type="hidden" name="id" value={question?.id ?? ""} />
@@ -119,11 +119,11 @@ export default async function QuestionEditor({
               <Field label="Énoncé"><textarea name="prompt" required rows={2} defaultValue={question?.prompt ?? ""} className={inputClass} /></Field>
               <Field label="Image (chemin)" hint="L'envoi d'images arrive avec le plan 4."><input name="image_path" defaultValue={question?.image_path ?? ""} className={inputClass} /></Field>
               <div>
-                <p className="mb-2 text-sm font-medium text-slate-700">Réponses (cochez la ou les bonnes réponses)</p>
+                <p className="mb-2 font-bold text-nuit">Réponses (cochez la ou les bonnes réponses)</p>
                 {choices.map((c, i) => (
                   <div key={i} className="mb-2 flex items-center gap-3">
                     <input type="hidden" name={`choice_id_${i}`} value={c.id} />
-                    <span className="w-6 text-sm font-semibold text-slate-500">{String.fromCharCode(65 + i)}</span>
+                    <span className="grid size-6 flex-none place-items-center rounded-full bg-bleu-doux text-xs font-black text-nuit">{String.fromCharCode(65 + i)}</span>
                     <input name={`choice_${i}`} defaultValue={c.label} className={inputClass} />
                     <label className="flex shrink-0 items-center gap-1 text-sm">
                       <input type="checkbox" name={`correct_${i}`} defaultChecked={c.is_correct} /> Correcte
@@ -158,17 +158,26 @@ export default async function QuestionEditor({
             </Card>
           )}
         </div>
-        <Card title="Aperçu élève">
-          {question?.image_path && <p className="mb-2 text-xs text-slate-500">Image : {question.image_path}</p>}
-          <p className="mb-3 font-semibold text-nuit">{question?.prompt ?? "L'énoncé apparaîtra ici."}</p>
-          <p className="mb-3 text-xs text-slate-500">{multiple ? "Plusieurs réponses possibles" : "Une seule réponse"}</p>
-          {question?.choices.map((c, i) => (
-            <div key={c.id} className="mb-2 rounded-xl border border-slate-200 px-3 py-2 text-sm">
-              <b className="mr-2">{String.fromCharCode(65 + i)}</b>
-              {c.label}
-            </div>
-          ))}
-        </Card>
+        <div>
+          <h2 className="mb-3 text-[19px] font-extrabold text-nuit">Aperçu élève</h2>
+          <div className="flex w-[340px] max-w-full flex-col gap-2.5 rounded-[34px] border-8 border-[#10223f] bg-fond px-[14px] py-[18px]">
+            {question?.image_path && <p className="text-center text-xs text-gris">Image : {question.image_path}</p>}
+            <p className="text-center text-[19px] font-black text-nuit">{question?.prompt ?? "L'énoncé apparaîtra ici."}</p>
+            <p className="text-center text-[13px] font-semibold text-gris">{multiple ? "Plusieurs réponses possibles" : "Une seule réponse"}</p>
+            {question?.choices.map((c, i) => (
+              <div
+                key={c.id}
+                className={`flex items-center gap-3 rounded-[14px] border-2 px-3 py-2.5 font-bold text-nuit ${c.is_correct ? "border-sarcelle bg-sarcelle-doux" : "border-bord bg-white"}`}
+              >
+                <span className={`grid size-[30px] flex-none place-items-center rounded-full font-black ${c.is_correct ? "bg-sarcelle text-white" : "bg-bleu-doux"}`}>
+                  {String.fromCharCode(65 + i)}
+                </span>
+                {c.label}
+              </div>
+            ))}
+            {question?.explanation && <p className="rounded-[14px] bg-sarcelle-doux px-3 py-2.5 font-semibold text-nuit">{question.explanation}</p>}
+          </div>
+        </div>
       </div>
     </>
   );

@@ -33,7 +33,7 @@ export default async function ProgramsPage({ searchParams }: { searchParams: Pro
           </thead>
           <tbody>
             {programs.map((p) => (
-              <tr key={p.id} className="border-t border-slate-100">
+              <tr key={p.id}>
                 <td>{p.country_code}</td>
                 <td>{p.license_type}</td>
                 <td>{p.name}</td>
@@ -41,7 +41,7 @@ export default async function ProgramsPage({ searchParams }: { searchParams: Pro
                 <td>{p.lessons}</td>
                 <td>{p.validated_questions}</td>
                 <td>{p.pending_questions}</td>
-                <td><Link className="text-bleu underline" href={`/programmes/${p.id}`}>Ouvrir</Link></td>
+                <td><Link className="font-bold text-bleu hover:underline" href={`/programmes/${p.id}`}>Ouvrir</Link></td>
               </tr>
             ))}
           </tbody>

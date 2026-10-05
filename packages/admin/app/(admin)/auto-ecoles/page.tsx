@@ -38,11 +38,11 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Prom
       <PageTitle title="Auto-écoles partenaires" subtitle="Codes promo, réductions et commissions." />
       <Flash {...flash} />
       <Card>
-        <div className="mb-2 grid grid-cols-8 gap-2 px-1 text-xs font-medium text-slate-500">
+        <div className="mb-2 grid grid-cols-8 gap-2 px-1 text-xs font-extrabold uppercase tracking-wide text-gris">
           <span>Nom</span><span>Code</span><span>Réduction %</span><span>Commission %</span><span>Active</span><span>Élèves</span><span>Ventes</span><span />
         </div>
         {schools.map((s) => (
-          <form key={s.id} action={update} className="mb-2 grid grid-cols-8 items-center gap-2 border-t border-slate-100 pt-2 text-sm">
+          <form key={s.id} action={update} className="mb-2 grid grid-cols-8 items-center gap-2 border-t border-bord pt-2 text-sm">
             <input type="hidden" name="id" value={s.id} />
             <input name="name" defaultValue={s.name} className={inputClass} />
             <span className="font-mono">{s.promo_code}</span>
@@ -54,7 +54,7 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Prom
             <Button variant="secondary">Enregistrer</Button>
           </form>
         ))}
-        {schools.length === 0 && <p className="text-sm text-slate-500">Aucune auto-école pour l'instant.</p>}
+        {schools.length === 0 && <p className="text-sm text-gris">Aucune auto-école pour l'instant.</p>}
       </Card>
       <Card title="Nouvelle auto-école">
         <form action={create} className="grid grid-cols-5 items-end gap-3">

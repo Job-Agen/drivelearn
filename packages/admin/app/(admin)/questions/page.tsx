@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card, Flash, inputClass, PageTitle, StatusBadge, tableClass } from "@/components/ui";
+import { Card, Flash, inputClass, PageTitle, StatusBadge, tableClass, buttonClass } from "@/components/ui";
 import { requireAdmin } from "@/lib/admin";
 import { listPrograms } from "@/lib/data/programs";
 import { listQuestions, type QuestionStatus } from "@/lib/data/questions";
@@ -36,7 +36,7 @@ export default async function QuestionsPage({
       <PageTitle
         title="Contenus"
         subtitle={`${list.total} question(s)`}
-        actions={<Link href={`/questions/nouvelle?program=${programId}`} className="rounded-lg bg-sarcelle px-4 py-2 text-sm font-semibold text-white">Nouvelle question</Link>}
+        actions={<Link href={`/questions/nouvelle?program=${programId}`} className={buttonClass()}>Nouvelle question</Link>}
       />
       <Flash ok={sp.ok} error={sp.error} />
       <form className="mb-4 grid grid-cols-5 gap-3">
@@ -52,15 +52,15 @@ export default async function QuestionsPage({
           {STATUSES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
         <input name="q" defaultValue={sp.q ?? ""} placeholder="Rechercher dans l'énoncé" className={inputClass} />
-        <button className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm">Filtrer</button>
+        <button className={buttonClass("secondary")}>Filtrer</button>
       </form>
       <Card>
         <table className={tableClass}>
           <thead><tr><th>Énoncé</th><th>Unité</th><th>Leçon</th><th>Statut</th><th>Signalements</th></tr></thead>
           <tbody>
             {list.rows.map((q) => (
-              <tr key={q.id} className="border-t border-slate-100">
-                <td><Link href={`/questions/${q.id}`} className="text-bleu underline">{q.prompt.slice(0, 90)}</Link></td>
+              <tr key={q.id}>
+                <td><Link href={`/questions/${q.id}`} className="font-bold text-bleu hover:underline">{q.prompt.slice(0, 90)}</Link></td>
                 <td>{q.unit_title}</td>
                 <td>{q.lesson_title ?? "—"}</td>
                 <td><StatusBadge status={q.status} /></td>
@@ -70,8 +70,8 @@ export default async function QuestionsPage({
           </tbody>
         </table>
         <div className="mt-4 flex gap-3 text-sm">
-          {page > 1 && <Link className="text-bleu underline" href={pageLink(page - 1)}>Précédent</Link>}
-          {page * 50 < list.total && <Link className="text-bleu underline" href={pageLink(page + 1)}>Suivant</Link>}
+          {page > 1 && <Link className="font-bold text-bleu hover:underline" href={pageLink(page - 1)}>Précédent</Link>}
+          {page * 50 < list.total && <Link className="font-bold text-bleu hover:underline" href={pageLink(page + 1)}>Suivant</Link>}
         </div>
       </Card>
     </>
