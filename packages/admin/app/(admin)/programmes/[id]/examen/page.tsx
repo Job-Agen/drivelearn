@@ -60,7 +60,7 @@ export default async function ExamPage({
                 <Field label="Seuil de réussite"><input name="exam_pass_mark" type="number" min={1} defaultValue={program.exam_pass_mark} className={inputClass} /></Field>
                 <Field label="Secondes par question"><input name="exam_seconds_per_question" type="number" min={5} max={600} defaultValue={program.exam_seconds_per_question} className={inputClass} /></Field>
               </div>
-              <p className="text-sm font-medium text-slate-700">Répartition par thème (vide = tirage libre sur tout le programme)</p>
+              <p className="font-bold text-nuit">Répartition par thème (vide = tirage libre sur tout le programme)</p>
               {units.map((u) => (
                 <Field key={u.id} label={u.title}>
                   <input name={`unit_${u.id}`} type="number" min={0} max={100} defaultValue={program.exam_distribution[u.id] ?? ""} className={inputClass} />
@@ -74,9 +74,9 @@ export default async function ExamPage({
           <Card title="Validation et conformité">
             <p className="mb-2 text-sm">{conformity.validated_total} question(s) validée(s) dans le programme.</p>
             {conformity.problems.length === 0 ? (
-              <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">L'examen est conforme.</p>
+              <p className="rounded-xl bg-sarcelle-doux font-bold p-3 text-sm text-sarcelle-fonce">L'examen est conforme.</p>
             ) : (
-              <ul className="list-disc space-y-1 rounded-lg bg-amber-50 p-3 pl-6 text-sm text-amber-800">
+              <ul className="list-disc space-y-1 rounded-xl bg-ambre-doux font-bold p-3 pl-6 text-sm text-ambre">
                 {conformity.problems.map((p) => <li key={p}>{p}</li>)}
               </ul>
             )}

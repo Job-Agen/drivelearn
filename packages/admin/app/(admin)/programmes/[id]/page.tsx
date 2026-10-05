@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button, Card, Field, Flash, inputClass, PageTitle, StatusBadge } from "@/components/ui";
+import { Button, Card, Field, Flash, inputClass, PageTitle, StatusBadge, buttonClass } from "@/components/ui";
 import { runAction } from "@/lib/actions";
 import { requireAdmin } from "@/lib/admin";
 import { examConformity, getProgram } from "@/lib/data/programs";
@@ -66,14 +66,14 @@ export default async function ProgramPage({
         actions={
           <div className="flex items-center gap-3">
             <StatusBadge status={program.status} />
-            <Link href={`/programmes/${id}/examen`} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm">Examen et publication</Link>
-            <Link href={`/questions?program=${id}`} className="rounded-lg bg-sarcelle px-4 py-2 text-sm font-semibold text-white">Questions</Link>
+            <Link href={`/programmes/${id}/examen`} className={buttonClass("secondary")}>Examen et publication</Link>
+            <Link href={`/questions?program=${id}`} className={buttonClass()}>Questions</Link>
           </div>
         }
       />
       <Flash {...flash} />
       {program.status === "publie" && conformity.problems.length > 0 && (
-        <p className="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="mb-4 rounded-xl bg-ambre-doux font-bold px-4 py-3 text-sm text-ambre">
           Attention : ce programme publié n'est plus conforme. {conformity.problems.join(" ")}
         </p>
       )}
@@ -89,7 +89,7 @@ export default async function ProgramPage({
             <Button variant="danger" name="op" value="delete">Supprimer</Button>
           </form>
           {unit.lessons.map((lesson) => (
-            <form key={lesson.id} action={lessonAction} className="mb-3 grid grid-cols-2 gap-3 rounded-xl border border-slate-100 p-4">
+            <form key={lesson.id} action={lessonAction} className="mb-3 grid grid-cols-2 gap-3 rounded-xl border border-bord p-4">
               <input type="hidden" name="program_id" value={id} />
               <input type="hidden" name="lesson_id" value={lesson.id} />
               <Field label={`Leçon ${lesson.position}`}><input name="title" defaultValue={lesson.title} className={inputClass} /></Field>
@@ -104,7 +104,7 @@ export default async function ProgramPage({
                 <Button variant="secondary" name="op" value="up">↑</Button>
                 <Button variant="secondary" name="op" value="down">↓</Button>
                 <Button variant="danger" name="op" value="delete">Supprimer</Button>
-                <span className="ml-auto text-xs text-slate-500">
+                <span className="ml-auto text-xs text-gris">
                   {Object.entries(lesson.counts).map(([s, n]) => `${n} ${s}`).join(" · ") || "aucune question"}
                 </span>
               </div>
