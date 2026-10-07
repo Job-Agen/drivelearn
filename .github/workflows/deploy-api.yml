@@ -1,0 +1,62 @@
+# Met à jour le serveur (API Neon Functions) à chaque fusion sur master :
+# migrations de la base, puis `neon deploy` (fonction, variables, tâche planifiée).
+# Secrets du dépôt : NEON_API_KEY (obligatoire), PAYGATE_AUTH_TOKEN (quand le compte marchand est prêt).
+name: Déployer l'API
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "packages/api/**"
+      - "packages/db/**"
+      - "neon.ts"
+      - "package-lock.json"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+
+concurrency: deploy-api
+
+env:
+  NEON_PROJECT_ID: young-river-14219375
+  NEON_BRANCH_ID: br-flat-lake-b12cfxtb
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      PAYGATE_AUTH_TOKEN: ${{ secrets.PAYGATE_AUTH_TOKEN }}
+    steps:
+      - name: Vérifier la clé Neon
+        run: |
+          if [ -z "$NEON_API_KEY" ]; then
+            echo "::error::Ajoutez le secret NEON_API_KEY (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci --legacy-peer-deps
+
+      - name: Vérification des types
+        run: npm run typecheck -w @drivelearn/api
+
+      - name: Migrations de la base
+        run: |
+          url="$(npx -y neon@latest connection-string "$NEON_BRANCH_ID" --project-id "$NEON_PROJECT_ID")"
+          echo "::add-mask::$url"
+          DATABASE_URL="$url" npm run migrate -w @drivelearn/db
+
+      - name: Déploiement
+        run: npx -y neon@latest deploy --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --update-existing --allow-protected --no-env-pull
+
+      - name: Vérification
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' "https://${NEON_BRANCH_ID}-api.compute.c-5.eu-central-1.aws.neon.tech/health")
+          echo "GET /health → $code"
+          test "$code" = 200
