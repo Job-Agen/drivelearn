@@ -1,3 +1,4 @@
+import { ImageField } from "@/components/image-field";
 import { Button, Card, Field, Flash, inputClass, PageTitle, StatusBadge } from "@/components/ui";
 import { runAction } from "@/lib/actions";
 import { requireAdmin } from "@/lib/admin";
@@ -5,6 +6,7 @@ import { deleteQuestion, getQuestion, saveQuestion, setQuestionStatus, type Ques
 import { examConformity, getProgram } from "@/lib/data/programs";
 import { listUnits } from "@/lib/data/units";
 import { inTransaction, pool } from "@/lib/db";
+import { ACCEPTED_IMAGES, imageFromForm, imageUrl } from "@/lib/images";
 
 const text = (f: FormData, k: string) => String(f.get(k) ?? "");
 
@@ -29,13 +31,15 @@ async function save(formData: FormData) {
       is_correct: formData.get(`correct_${i}`) === "on",
     }));
     const intent = text(formData, "intent");
+    // Envoyée avant la transaction : un échec d'envoi ne laisse rien en base.
+    const imagePath = await imageFromForm(formData, "image_path");
     const savedId = await inTransaction(async (client) => {
       const qid = await saveQuestion(client, {
         id,
         unit_id: unitId,
         lesson_id: lessonId || null,
         prompt: text(formData, "prompt"),
-        image_path: text(formData, "image_path") || null,
+        image_path: imagePath,
         explanation: text(formData, "explanation") || null,
         source: text(formData, "source") || null,
         choices,
@@ -117,7 +121,7 @@ export default async function QuestionEditor({
                 </select>
               </Field>
               <Field label="Énoncé"><textarea name="prompt" required rows={2} defaultValue={question?.prompt ?? ""} className={inputClass} /></Field>
-              <Field label="Image (chemin)" hint="L'envoi d'images arrive avec le plan 4."><input name="image_path" defaultValue={question?.image_path ?? ""} className={inputClass} /></Field>
+              <ImageField name="image_path" label="Image" current={question?.image_path ?? null} currentUrl={imageUrl(question?.image_path)} accept={ACCEPTED_IMAGES} />
               <div>
                 <p className="mb-2 font-bold text-nuit">Réponses (cochez la ou les bonnes réponses)</p>
                 {choices.map((c, i) => (
@@ -161,7 +165,13 @@ export default async function QuestionEditor({
         <div>
           <h2 className="mb-3 text-[19px] font-extrabold text-nuit">Aperçu élève</h2>
           <div className="flex w-[340px] max-w-full flex-col gap-2.5 rounded-[34px] border-8 border-[#10223f] bg-fond px-[14px] py-[18px]">
-            {question?.image_path && <p className="text-center text-xs text-gris">Image : {question.image_path}</p>}
+            {question?.image_path &&
+              (imageUrl(question.image_path) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={imageUrl(question.image_path)!} alt="" className="aspect-[16/10] w-full rounded-[14px] bg-bleu-doux object-contain" />
+              ) : (
+                <p className="text-center text-xs text-gris">Image : {question.image_path}</p>
+              ))}
             <p className="text-center text-[19px] font-black text-nuit">{question?.prompt ?? "L'énoncé apparaîtra ici."}</p>
             <p className="text-center text-[13px] font-semibold text-gris">{multiple ? "Plusieurs réponses possibles" : "Une seule réponse"}</p>
             {question?.choices.map((c, i) => (

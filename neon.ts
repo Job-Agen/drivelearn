@@ -13,6 +13,8 @@ export default defineConfig({
         NEON_BRANCH_ID: "br-flat-lake-b12cfxtb",
         // Temporaire : à repasser à "true" une fois la vérification d'e-mail activée dans Neon Auth.
         REQUIRE_VERIFIED_EMAIL: "false",
+        // Bucket public des images (créé le 22/10/2026) : l'application préfixe les image_path avec cette adresse.
+        IMAGES_BASE_URL: "https://br-flat-lake-b12cfxtb.storage.c-5.eu-central-1.aws.neon.tech/question-images",
         // Jeton marchand PayGate Global, transmis seulement s'il est présent (paiement indisponible sinon).
         ...(process.env.PAYGATE_AUTH_TOKEN ? { PAYGATE_AUTH_TOKEN: process.env.PAYGATE_AUTH_TOKEN } : {}),
       },
