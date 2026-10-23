@@ -2,9 +2,11 @@ import { randomUUID } from "expo-crypto";
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type PropsWithChildren } from "react";
 import { AppState } from "react-native";
 import { applyAnswers, questionsToReview, type Mastery } from "../domain/mistakes";
+import { reminderPlan } from "../domain/reminders";
 import { api } from "../lib/api";
 import { auth } from "../lib/auth";
 import { AppError, isOffline } from "../lib/http";
+import { clearReminders, scheduleReminders } from "../lib/notifications";
 import { kv } from "../lib/storage";
 import type { Answer, ContentBundle, Me, PendingSession, Progress, SessionKind } from "../lib/types";
 
@@ -69,6 +71,10 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [pending, setPending] = useState<PendingSession[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
+  // Jour (local) du dernier progrès reçu du serveur et de la dernière séance faite sur ce téléphone :
+  // un progrès en cache d'hier ne doit pas faire sauter le rappel d'aujourd'hui.
+  const [progressDay, setProgressDay] = useState<string | null>(null);
+  const [sessionDay, setSessionDay] = useState<string | null>(null);
 
   // Références à jour pour les fonctions asynchrones (évite les fermetures périmées).
   const ref = useRef({ pending, bundle, localCompleted, mastery });
@@ -135,6 +141,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         }
         const p = await api.progress();
         setProgress(p);
+        setProgressDay(localDay());
         await kv.set(K.progress, p);
       }
       setLastError(null);
@@ -197,6 +204,27 @@ export function AppProvider({ children }: PropsWithChildren) {
     [resetLocal, setMe],
   );
 
+  // Rappels quotidiens : reprogrammés quand le profil, le progrès ou la séance du jour changent.
+  const today = localDay();
+  const practicedToday = sessionDay === today || (progressDay === today && progress?.practiced_today === true);
+  useEffect(() => {
+    if (status === "signedOut") {
+      clearReminders();
+      return;
+    }
+    if (status !== "signedIn" || !me) return;
+    scheduleReminders(
+      reminderPlan({
+        enabled: me.reminder_enabled,
+        time: me.reminder_time,
+        now: new Date(),
+        practicedToday,
+        streak: progress?.current_streak ?? 0,
+        firstName: me.first_name,
+      }),
+    );
+  }, [status, me, practicedToday, progress?.current_streak]);
+
   const value = useMemo<AppContextValue>(() => {
     const completed = new Set([...(progress?.completed_lesson_ids ?? []), ...localCompleted]);
     return {
@@ -248,6 +276,7 @@ export function AppProvider({ children }: PropsWithChildren) {
           active_seconds: Math.min(3600, Math.round((Date.now() - s.startedAt) / 1000)),
           answers: s.answers.map(({ question_id, choice_ids }) => ({ question_id, choice_ids })),
         };
+        setSessionDay(localDay());
         const queue = [...ref.current.pending, session];
         setPending(queue);
         ref.current.pending = queue;
@@ -269,4 +298,9 @@ export function AppProvider({ children }: PropsWithChildren) {
   }, [status, me, bundle, progress, localCompleted, mastery, pending.length, syncing, lastError, afterSignIn, resetLocal, setMe, refresh]);
 
   return <AppContext value={value}>{children}</AppContext>;
+}
+
+/** Date du jour sur le téléphone (AAAA-MM-JJ). */
+function localDay(date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }

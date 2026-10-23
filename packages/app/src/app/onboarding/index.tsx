@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { api } from "../../lib/api";
+import { askReminderPermission } from "../../lib/notifications";
 import type { Program } from "../../lib/types";
 import { useApp } from "../../state/app";
 import { Flag, Illustration } from "../../ui/Illustration";
@@ -43,6 +44,8 @@ export default function Onboarding() {
     setBusy(true);
     setError(null);
     try {
+      // Rappels activés par défaut : c'est le moment de demander l'autorisation (« Un peu chaque jour »).
+      await askReminderPermission();
       await updateMe({ program_id: programId, first_name: firstName.trim() || null, daily_goal_minutes: goal });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Enregistrement impossible.");

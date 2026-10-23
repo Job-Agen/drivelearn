@@ -24,7 +24,13 @@
       "expo-router",
       "expo-secure-store",
       "expo-image",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "color": "#1FA463"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
