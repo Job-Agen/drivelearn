@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { ImageField } from "@/components/image-field";
 import { Button, Card, Field, Flash, inputClass, PageTitle, StatusBadge, buttonClass } from "@/components/ui";
 import { runAction } from "@/lib/actions";
 import { requireAdmin } from "@/lib/admin";
 import { examConformity, getProgram } from "@/lib/data/programs";
 import { createLesson, createUnit, deleteLesson, deleteUnit, listUnits, moveItem, renameUnit, updateLesson } from "@/lib/data/units";
 import { pool } from "@/lib/db";
+import { ACCEPTED_IMAGES, imageFromForm, imageUrl } from "@/lib/images";
 
 const text = (f: FormData, k: string) => String(f.get(k) ?? "");
 
@@ -35,7 +37,7 @@ async function lessonAction(formData: FormData) {
         title: text(formData, "title"),
         intro_title: text(formData, "intro_title") || null,
         intro_text: text(formData, "intro_text") || null,
-        intro_image_path: text(formData, "intro_image_path") || null,
+        intro_image_path: await imageFromForm(formData, "intro_image_path"),
         mentor_tip: text(formData, "mentor_tip") || null,
       });
     if (op === "delete") await deleteLesson(pool, lessonId);
@@ -97,7 +99,7 @@ export default async function ProgramPage({
               <Field label="Texte d'explication"><textarea name="intro_text" rows={3} defaultValue={lesson.intro_text ?? ""} className={inputClass} /></Field>
               <div className="space-y-3">
                 <Field label="Conseil du mentor"><input name="mentor_tip" defaultValue={lesson.mentor_tip ?? ""} className={inputClass} /></Field>
-                <Field label="Image (chemin)"><input name="intro_image_path" defaultValue={lesson.intro_image_path ?? ""} className={inputClass} /></Field>
+                <ImageField name="intro_image_path" label="Image de l'explication" current={lesson.intro_image_path} currentUrl={imageUrl(lesson.intro_image_path)} accept={ACCEPTED_IMAGES} />
               </div>
               <div className="col-span-2 flex items-center gap-2">
                 <Button name="op" value="save">Enregistrer</Button>
