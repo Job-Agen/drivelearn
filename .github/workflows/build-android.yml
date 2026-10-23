@@ -1,0 +1,64 @@
+# Fabrique l'application Android sur les serveurs d'Expo (EAS Build) à chaque fusion sur master qui touche l'app,
+# ou à la main (« Run workflow »). Profil « preview » : un APK à installer directement sur un téléphone ;
+# profil « production » : le paquet AAB pour le Play Store.
+# Secret du dépôt : EXPO_TOKEN (expo.dev → Account settings → Access tokens).
+name: Application Android
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "packages/app/**"
+      - ".github/workflows/build-android.yml"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Profil EAS"
+        type: choice
+        options: [preview, production]
+        default: preview
+
+concurrency: build-android
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      PROFILE: ${{ inputs.profile || 'preview' }}
+    defaults:
+      run:
+        working-directory: packages/app
+    steps:
+      - name: Vérifier le jeton Expo
+        working-directory: .
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Ajoutez le secret EXPO_TOKEN (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci --legacy-peer-deps
+        working-directory: .
+
+      - name: Vérifications de l'app
+        run: npm run typecheck && npm test
+
+      # Crée le projet sur le compte Expo du jeton au premier passage, puis le relie (identifiant dans app.json).
+      - name: Projet Expo
+        run: npx -y eas-cli@latest init --non-interactive --force
+
+      - name: Lancer la fabrication
+        run: |
+          npx -y eas-cli@latest build --platform android --profile "$PROFILE" --non-interactive --no-wait 2>&1 | tee build.log
+          url=$(grep -oE 'https://expo\.dev/[^ ]*/builds/[0-9a-f-]+' build.log | head -1)
+          echo "### Application Android ($PROFILE)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Fabrication lancée sur Expo (environ 15 minutes) : ${url:-voir expo.dev → Builds}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Une fois terminée, la page affiche un QR code et un lien pour installer l'APK sur Android." >> "$GITHUB_STEP_SUMMARY"

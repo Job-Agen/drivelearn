@@ -25,6 +25,18 @@ Sans variable, l'app utilise la production : la Function `api` et Neon Auth de l
 (`src/lib/config.ts`). `EXPO_PUBLIC_API_URL` et `EXPO_PUBLIC_AUTH_URL` (`.env.local`) servent à viser un autre backend.
 L'app s'annonce à Neon Auth avec l'origine `https://app.drivelearn.tg`, qui doit figurer dans les domaines de confiance.
 
+## Rappels quotidiens
+
+Programmés sur le téléphone (`src/domain/reminders.ts`, `src/lib/notifications.ts`) : les 14 prochains jours à
+l'heure choisie dans le profil, sans rappel le jour où une séance est déjà faite. L'autorisation est demandée à la
+fin de la configuration (« C'est parti ») et quand l'élève active le rappel dans ses préférences.
+
+## Application Android
+
+Fabriquée par EAS Build (`eas.json`) via le workflow GitHub « Application Android » : à chaque fusion sur `master`
+qui touche l'app, ou à la main. Profil `preview` : APK à installer directement ; `production` : AAB pour le Play
+Store. Secret nécessaire : `EXPO_TOKEN`.
+
 ## Vérifications
 
 ```sh

@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { api } from "../lib/api";
+import { askReminderPermission, remindersSupported } from "../lib/notifications";
 import { useApp } from "../state/app";
 import { Flag } from "../ui/Illustration";
 import { Body, Button, ErrorText, Screen, TopBar } from "../ui/kit";
@@ -38,8 +39,19 @@ export default function SettingsScreen() {
       });
       if (code.trim()) {
         const { driving_school_name } = await api.setPromoCode(code.trim());
-        await setMe({ ...me, first_name: firstName.trim() || null, daily_goal_minutes: goal, reminder_enabled: reminder, driving_school_name });
+        await setMe({
+          ...me,
+          first_name: firstName.trim() || null,
+          daily_goal_minutes: goal,
+          reminder_enabled: reminder,
+          reminder_time: reminder ? time : me.reminder_time,
+          driving_school_name,
+        });
         setCode("");
+      }
+      if (reminder && remindersSupported && !(await askReminderPermission())) {
+        setInfo("Enregistré. Pour recevoir le rappel, autorise les notifications de DriveLearn dans les réglages du téléphone.");
+        return;
       }
       router.back();
     } catch (e) {
