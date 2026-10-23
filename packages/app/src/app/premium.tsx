@@ -1,27 +1,28 @@
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { api, type Network, type Quote } from "../lib/api";
+import { PASS_SALES_IN_APP } from "../lib/config";
 import { useApp } from "../state/app";
-import { Illustration } from "../ui/Illustration";
 import { Button, ErrorText, Screen, TopBar } from "../ui/kit";
 import { fcfa } from "../ui/money";
+import { PassActivation } from "../ui/PassActivation";
+import { PassBenefits } from "../ui/PassBenefits";
 import { colors, fonts, radius, space } from "../ui/theme";
 
-const BENEFITS = [
-  { title: "Examens blancs illimités", text: "Entraîne-toi autant que tu veux" },
-  { title: "Correction détaillée", text: "Comprends chacune de tes erreurs" },
-  { title: "Indicateur « prêt pour l'examen »", text: "Sache quand tu es prêt le jour J" },
-];
 const NETWORKS: { value: Network; label: string; color: string }[] = [
   { value: "FLOOZ", label: "Flooz", color: "#0A5BB5" },
   { value: "TMONEY", label: "T-Money", color: "#E2A400" },
 ];
 
-/** Écran 23 — Pass Examen : avantages, prix, code promo, paiement Flooz / T-Money. */
+/** Écran 23 — Pass Examen : activation par code, ou achat dans l'app si PASS_SALES_IN_APP. */
 export default function PremiumScreen() {
+  return PASS_SALES_IN_APP ? <PurchaseScreen /> : <PassActivation />;
+}
+
+/** Avantages, prix, code promo, paiement Flooz / T-Money. */
+function PurchaseScreen() {
   const { me, setMe } = useApp();
   const [quote, setQuote] = useState<Quote | null>(null);
   const [network, setNetwork] = useState<Network>("FLOOZ");
@@ -76,28 +77,7 @@ export default function PremiumScreen() {
         </>
       }
     >
-      <LinearGradient colors={["#1E7FE0", "#1558C0"]} style={styles.hero}>
-        <Illustration name="premiumMentor" width={130} style={{ alignSelf: "flex-end" }} />
-        <View style={{ flex: 1, paddingVertical: space.md, gap: space.xs }}>
-          <Ionicons name="star" size={34} color={colors.accent} />
-          <Text style={styles.heroTitle}>Va plus loin, à ton rythme</Text>
-          <Text style={styles.heroText}>Plus d'entraînement pour réussir ton examen avec confiance.</Text>
-        </View>
-      </LinearGradient>
-
-      <View style={{ gap: space.sm }}>
-        {BENEFITS.map((b) => (
-          <View key={b.title} style={styles.benefit}>
-            <View style={styles.check}>
-              <Ionicons name="checkmark" size={22} color="#fff" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.benefitTitle}>{b.title}</Text>
-              <Text style={styles.benefitText}>{b.text}</Text>
-            </View>
-          </View>
-        ))}
-      </View>
+      <PassBenefits />
 
       <View style={styles.price}>
         <View style={{ flex: 1 }}>
@@ -165,12 +145,6 @@ export default function PremiumScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: { flexDirection: "row", gap: space.sm, borderRadius: radius.lg, paddingHorizontal: space.md, overflow: "hidden" },
-  heroTitle: { fontFamily: fonts.black, fontSize: 23, lineHeight: 27, color: "#fff" },
-  heroText: { fontFamily: fonts.semibold, fontSize: 14, lineHeight: 19, color: "#fff" },
-  benefit: { flexDirection: "row", alignItems: "center", gap: space.md },
-  check: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, borderWidth: 4, borderColor: colors.primarySoft, alignItems: "center", justifyContent: "center" },
-  benefitTitle: { fontFamily: fonts.extrabold, fontSize: 16, color: colors.navy },
   benefitText: { fontFamily: fonts.semibold, fontSize: 14, color: colors.muted },
   price: { flexDirection: "row", alignItems: "center", gap: space.md, backgroundColor: colors.blueSoft, borderRadius: radius.md, padding: space.md },
   priceValue: { fontFamily: fonts.black, fontSize: 26, color: colors.navy },

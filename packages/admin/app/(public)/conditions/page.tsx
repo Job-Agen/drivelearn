@@ -30,14 +30,14 @@ export default function TermsPage() {
 
       <H2>Gratuit et Pass Examen</H2>
       <P>
-        Les leçons et les révisions sont gratuites. Le Pass Examen donne accès aux examens blancs pendant la durée
-        indiquée dans l'application au moment de l'achat. Son prix est affiché avant le paiement ; il se paie une seule
-        fois, par Flooz ou T-Money, et ne se renouvelle pas automatiquement. Un code promo d'auto-école partenaire peut
-        donner une réduction.
+        Les leçons et les révisions sont gratuites, ainsi que le premier examen blanc. Le Pass Examen donne accès aux
+        examens blancs pendant une durée fixe (90 jours sauf mention contraire au moment de la vente). Il s'active en
+        saisissant dans l'application un code d'activation, utilisable une seule fois. Il ne se renouvelle pas
+        automatiquement ; un nouveau code prolonge le Pass en cours.
       </P>
       <P>
-        Si un paiement a été débité sans que le Pass soit activé, écrivez-nous à {CONTACT_EMAIL} avec la date et le
-        numéro utilisé : nous vérifions auprès du prestataire de paiement et activons le Pass ou vous remboursons.
+        Si un code d'activation est refusé alors que vous ne l'avez jamais utilisé, écrivez-nous à {CONTACT_EMAIL} avec
+        le code et l'endroit où vous l'avez obtenu : nous le vérifions et activons votre Pass.
       </P>
 
       <H2>Bon usage</H2>

@@ -19,3 +19,10 @@ export const REVIEW_BATCH = 10;
 export const SITE_URL = "https://drivelearn-admin.vercel.app";
 export const TERMS_URL = `${SITE_URL}/conditions`;
 export const PRIVACY_URL = `${SITE_URL}/confidentialite`;
+
+/**
+ * Vente du Pass Examen dans l'app (Flooz / T-Money). Désactivée : Google Play impose son propre paiement pour les
+ * contenus numériques achetés dans une app. Le Pass se vend hors de l'app sous forme de code d'activation, que
+ * l'élève saisit (écran 23). Le parcours de paiement reste dans le code, prêt à être réactivé.
+ */
+export const PASS_SALES_IN_APP = false;

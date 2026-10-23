@@ -87,3 +87,26 @@ describe("suppression de compte", () => {
     });
   });
 });
+
+describe("code d'activation du Pass", () => {
+  it("active le Pass, puis refuse le même code et un code inconnu", () =>
+    withApp(async (api, db) => {
+      await api.request("GET", "/v1/me", { user: "user-a" });
+      await api.request("GET", "/v1/me", { user: "user-b" });
+      const batchId = (await db.query("select create_pass_code_batch('Essai', null, 1, 90) as id")).rows[0].id;
+      const code = (await db.query("select code from pass_codes where batch_id = $1", [batchId])).rows[0].code as string;
+
+      const ok = await api.request("POST", "/v1/me/pass-code", { user: "user-a", body: { code: code.toLowerCase() } });
+      expect(ok.status).toBe(201);
+      expect(new Date(ok.body.pass_ends_at).getTime()).toBeGreaterThan(Date.now() + 89 * 86_400_000);
+      const status = await api.request("GET", "/v1/exams/status", { user: "user-a" });
+      expect(status.body.has_pass).toBe(true);
+
+      const again = await api.request("POST", "/v1/me/pass-code", { user: "user-b", body: { code } });
+      expect({ status: again.status, error: again.body.error }).toEqual({ status: 409, error: "pass_code_used" });
+      const unknown = await api.request("POST", "/v1/me/pass-code", { user: "user-b", body: { code: "ABCD-EFGH-JKLM" } });
+      expect({ status: unknown.status, error: unknown.body.error }).toEqual({ status: 400, error: "invalid_pass_code" });
+      const empty = await api.request("POST", "/v1/me/pass-code", { user: "user-b", body: { code: " " } });
+      expect(empty.status).toBe(400);
+    }));
+});

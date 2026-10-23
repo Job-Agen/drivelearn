@@ -20,13 +20,9 @@ export default function PrivacyPage() {
         <li><b>Compte</b> : adresse e-mail, mot de passe (enregistré chiffré, jamais lisible) et, si vous le donnez, votre prénom.</li>
         <li><b>Préférences</b> : pays et permis préparés, objectif quotidien, heure du rappel, auto-école (si vous saisissez un code promo).</li>
         <li><b>Progrès</b> : séances, réponses aux questions, examens blancs, série de jours et points d'expérience.</li>
-        <li><b>Achats</b> : montant, date et état de vos paiements du Pass Examen.</li>
+        <li><b>Pass Examen</b> : le code d'activation que vous saisissez, sa date d'utilisation et la période de votre Pass.</li>
         <li><b>Signalements</b> : la question signalée, le motif et le commentaire que vous écrivez.</li>
       </Ul>
-      <P>
-        Pour payer le Pass Examen par Flooz ou T-Money, vous saisissez votre numéro de téléphone : il est transmis
-        directement à notre prestataire de paiement et <b>n'est pas conservé</b> par DriveLearn.
-      </P>
       <P>
         Nous ne collectons ni votre position, ni vos contacts, ni vos photos. L'application ne contient aucune publicité
         et n'utilise aucun outil de suivi publicitaire.
@@ -36,7 +32,7 @@ export default function PrivacyPage() {
       <Ul>
         <li>Faire fonctionner votre compte et retrouver votre progression sur un autre téléphone.</li>
         <li>Adapter les leçons et les révisions à vos erreurs, calculer votre série et vos résultats aux examens blancs.</li>
-        <li>Activer le Pass Examen après paiement et calculer la commission de l'auto-école partenaire, le cas échéant.</li>
+        <li>Activer votre Pass Examen quand vous saisissez un code d'activation.</li>
         <li>Corriger les questions signalées.</li>
         <li>Vous envoyer les e-mails nécessaires au compte (vérification, mot de passe oublié).</li>
       </Ul>
@@ -50,15 +46,14 @@ export default function PrivacyPage() {
       <P>Nous ne vendons pas vos données. Elles sont seulement traitées par les prestataires techniques suivants :</P>
       <Ul>
         <li><b>Neon</b> (Databricks) : hébergement de la base de données, du serveur et des comptes, en Allemagne (Francfort).</li>
-        <li><b>PayGate Global</b> : paiement par Flooz et T-Money (numéro de téléphone et montant).</li>
-        <li><b>Les auto-écoles partenaires</b> ne reçoivent pas vos données : si vous saisissez un code promo, seul le nombre de Pass vendus avec ce code sert à calculer leur commission.</li>
+        <li><b>Les auto-écoles partenaires</b> ne reçoivent pas vos données.</li>
       </Ul>
 
       <H2>Combien de temps nous les gardons</H2>
       <P>
         Vos données sont gardées tant que votre compte existe. Quand vous supprimez votre compte, votre profil, vos
-        séances, vos réponses et vos examens sont effacés immédiatement. Les traces de paiement sont conservées sans lien
-        avec vous, pour nos obligations comptables, de même que les signalements de questions, sans votre nom.
+        séances, vos réponses, vos examens et votre Pass sont effacés immédiatement. Le code d'activation reste marqué
+        comme utilisé, sans lien avec vous, et les signalements de questions sont conservés sans votre nom.
       </P>
 
       <H2>Vos droits</H2>

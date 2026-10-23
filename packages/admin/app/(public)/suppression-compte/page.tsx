@@ -35,7 +35,7 @@ export default function DeleteAccountPage() {
 
       <H2>Ce qui est conservé</H2>
       <Ul>
-        <li>Les traces de paiement (montant, date, état), sans lien avec vous, pour nos obligations comptables.</li>
+        <li>Les codes d'activation que vous avez utilisés restent marqués comme utilisés, sans lien avec vous.</li>
         <li>Les signalements de questions que vous avez envoyés, sans lien avec vous.</li>
       </Ul>
     </>

@@ -2,26 +2,16 @@
 
 Tout ce qu'il faut pour remplir la Google Play Console. Les textes sont prêts à copier-coller.
 
-## ⚠️ À trancher avant de soumettre : le paiement du Pass Examen
+## Paiement du Pass Examen : vendu hors de l'application
 
-Google Play impose son propre système de paiement (Google Play Billing) pour les contenus numériques achetés
-**dans** une application. Le Pass Examen débloque des examens blancs dans l'app : c'est un contenu numérique.
-L'app le vend aujourd'hui par Flooz / T-Money via PayGate, ce qui expose à un **refus de publication** ou à un
-retrait de l'app.
+Google Play impose son propre système de paiement pour les contenus numériques achetés **dans** une application.
+Choix retenu : **l'app ne vend rien**. Le Pass Examen s'obtient sous forme de **code d'activation** (site
+d'administration → « Codes Pass »), vendu par les auto-écoles partenaires ou en direct ; l'élève le saisit dans
+l'app (écran Pass Examen → « Activer mon Pass »).
 
-Trois options :
-
-1. **Vendre le Pass hors de l'app** (recommandé pour démarrer) : l'app Play Store n'affiche plus d'achat ; le Pass
-   s'obtient par un **code d'activation** vendu par les auto-écoles partenaires ou sur un site web, et l'élève le
-   saisit dans l'app. Google autorise l'accès à un contenu acheté ailleurs, à condition que l'app ne renvoie pas
-   vers ce paiement.
-2. **Google Play Billing** : Google encaisse (carte, carte prépayée Google Play, facturation opérateur selon les
-   pays) et garde une commission (en général 15 % sur le premier million de dollars de revenus annuels). Le paiement mobile money
-   ne serait plus proposé dans l'app.
-3. **Garder PayGate** en vérifiant si un programme de paiement alternatif de Google couvre le Togo au moment de la
-   soumission (à vérifier dans la Play Console, rubrique « Paiements »).
-
-Les règles de Google évoluent : relire la politique « Paiements » de la Play Console au moment de soumettre.
+À respecter dans l'app, la fiche et les captures : **aucun prix, aucun lien ni aucune indication pour acheter le
+Pass ailleurs** (Google l'interdit). L'app dit seulement « Saisis le code de ton Pass Examen ». Le paiement
+Flooz / T-Money reste dans le code, désactivé (`PASS_SALES_IN_APP` dans `packages/app/src/lib/config.ts`).
 
 ## Fiche de l'application
 
@@ -62,13 +52,11 @@ Les règles de Google évoluent : relire la politique « Paiements » de la Play
 > Les leçons sont enregistrées sur ton téléphone : révise partout, tes résultats sont envoyés dès que tu retrouves
 > du réseau.
 >
-> 🏫 Avec ton auto-école
-> Ton auto-école est partenaire de DriveLearn ? Saisis son code pour profiter d'une réduction.
+> 🔑 Pass Examen
+> Tu as un code d'activation du Pass Examen ? Saisis-le dans l'app pour débloquer tous les examens blancs.
 >
 > DriveLearn ne remplace pas ton auto-école : c'est le compagnon de révision qui t'aide à arriver prêt le jour de
 > l'examen.
-
-*(Adapter le paragraphe « examens blancs » et la mention de la réduction selon l'option de paiement retenue.)*
 
 ## Visuels
 
@@ -86,7 +74,7 @@ Les icônes et l'image de présentation se régénèrent avec `outils/generer-vi
 ## Sécurité des données (formulaire « Data safety »)
 
 **L'application collecte-t-elle ou partage-t-elle des données ?** Oui, elle en collecte. Elle n'en partage pas
-(les prestataires qui traitent les données pour notre compte — Neon, PayGate — ne comptent pas comme un partage).
+(Neon, qui héberge les données pour notre compte, ne compte pas comme un partage).
 
 **Toutes les données sont chiffrées en transit** : oui. **Les utilisateurs peuvent demander la suppression** : oui
 (dans l'app et via la page de suppression).
@@ -95,14 +83,11 @@ Les icônes et l'image de présentation se régénèrent avec `outils/generer-vi
 | --- | --- | --- | --- | --- |
 | Adresse e-mail (Infos personnelles) | Oui | Oui | Gestion du compte | Non |
 | Nom (Infos personnelles) — le prénom | Oui | Non | Fonctionnement de l'app | Non |
-| Numéro de téléphone (Infos personnelles) — pour le paiement | Oui | Non | Fonctionnement de l'app (paiement) | **Oui** |
-| Historique des achats (Infos financières) | Oui | Non | Fonctionnement de l'app | Non |
 | Interactions avec l'app (Activité dans l'app) — séances, réponses | Oui | Oui | Fonctionnement de l'app, personnalisation | Non |
 | Autre contenu généré par l'utilisateur — commentaires de signalement | Oui | Non | Fonctionnement de l'app | Non |
 
 Rien d'autre : pas de position, pas de contacts, pas de photos, pas d'identifiant d'appareil, pas de journaux de
-plantage, pas de publicité. Si l'option 1 ou 2 est retenue pour le paiement, retirer la ligne « Numéro de
-téléphone ».
+plantage, pas de publicité, pas d'achat dans l'app.
 
 ## Autres rubriques de la Play Console
 
@@ -111,7 +96,7 @@ téléphone ».
 - **Annonces** : l'application ne contient pas d'annonces.
 - **Classification du contenu** (questionnaire IARC) : catégorie « Référence, actualités ou éducation » ; aucune
   violence, aucun contenu sexuel, pas de jeux d'argent, pas d'échanges entre utilisateurs, pas de partage de
-  position ; achats numériques : oui (si le Pass reste vendu dans l'app).
+  position ; achats numériques : **non** (le Pass est activé par un code obtenu hors de l'app).
 - **Public cible** : 16-17 ans et 18 ans et plus (pas de moins de 13 ans : évite les obligations « Familles »).
 - **Application d'actualités / santé / finance** : non.
 
