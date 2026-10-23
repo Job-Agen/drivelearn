@@ -1,5 +1,7 @@
 // Adresses du backend. Surchargeables par EXPO_PUBLIC_API_URL et EXPO_PUBLIC_AUTH_URL (fichier .env.local).
-export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? "").replace(/\/$/, "");
+export const API_URL = (
+  process.env.EXPO_PUBLIC_API_URL ?? "https://br-flat-lake-b12cfxtb-api.compute.c-5.eu-central-1.aws.neon.tech"
+).replace(/\/$/, "");
 export const AUTH_URL = (
   process.env.EXPO_PUBLIC_AUTH_URL ??
   "https://ep-small-glade-b1t7owsk.neonauth.c-5.eu-central-1.aws.neon.tech/neondb/auth"

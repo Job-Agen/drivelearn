@@ -21,7 +21,8 @@ Sur un téléphone, remplacer `localhost` par l'adresse IP de l'ordinateur.
 
 ## Contre le backend Neon
 
-Copier `.env.example` en `.env.local` et renseigner `EXPO_PUBLIC_API_URL` (URL de la Function `api`).
+Sans variable, l'app utilise la production : la Function `api` et Neon Auth de la branche `br-flat-lake-b12cfxtb`
+(`src/lib/config.ts`). `EXPO_PUBLIC_API_URL` et `EXPO_PUBLIC_AUTH_URL` (`.env.local`) servent à viser un autre backend.
 L'app s'annonce à Neon Auth avec l'origine `https://app.drivelearn.tg`, qui doit figurer dans les domaines de confiance.
 
 ## Vérifications
