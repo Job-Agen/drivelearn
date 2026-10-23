@@ -14,3 +14,8 @@ export const APP_ORIGIN = "https://app.drivelearn.tg";
 export const XP_PER_SESSION = 10;
 export const XP_PERFECT_BONUS = 5;
 export const REVIEW_BATCH = 10;
+
+/** Pages publiques (site DriveLearn), aussi données dans la fiche Play Store. */
+export const SITE_URL = "https://drivelearn-admin.vercel.app";
+export const TERMS_URL = `${SITE_URL}/conditions`;
+export const PRIVACY_URL = `${SITE_URL}/confidentialite`;

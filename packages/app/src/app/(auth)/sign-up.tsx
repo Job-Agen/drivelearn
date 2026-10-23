@@ -1,14 +1,12 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import { Linking, Text, View } from "react-native";
+import { TERMS_URL, PRIVACY_URL } from "../../lib/config";
 import { AppError } from "../../lib/http";
 import { useApp } from "../../state/app";
 import { Illustration } from "../../ui/Illustration";
 import { Body, Button, Divider, ErrorText, Field, Link, Row, Screen, Title } from "../../ui/kit";
 import { colors, fonts, space } from "../../ui/theme";
-
-export const TERMS_URL = "https://drivelearn.tg/conditions";
-export const PRIVACY_URL = "https://drivelearn.tg/confidentialite";
 
 /** Écran 02 — Créer un compte. Le prénom est demandé ensuite, à la configuration. */
 export default function SignUp() {
