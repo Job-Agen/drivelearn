@@ -45,7 +45,8 @@ jobs:
           node-version: 24
           cache: npm
 
-      - run: npm ci --legacy-peer-deps
+      # Sans --legacy-peer-deps : les tests ont besoin des dépendances « peer » (vite pour vitest).
+      - run: npm ci
         working-directory: .
 
       - name: Vérifications de l'app
