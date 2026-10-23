@@ -34,6 +34,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "owner": "devcop24s-team",
+    "extra": {
+      "eas": {
+        "projectId": "7207d111-5039-4724-b608-76adf7f25a0f"
+      }
     }
   }
 }
