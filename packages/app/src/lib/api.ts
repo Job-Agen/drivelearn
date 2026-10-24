@@ -63,6 +63,7 @@ export const api = {
   me: () => request<Me>("GET", "/me"),
   updateMe: (patch: Partial<Omit<Me, "id" | "email" | "driving_school_name">> & { push_token?: string | null }) =>
     request<Me>("PATCH", "/me", patch),
+  redeemPassCode: (code: string) => request<{ pass_ends_at: string }>("POST", "/me/pass-code", { code }),
   setPromoCode: (code: string | null) =>
     request<{ driving_school_name: string | null }>("POST", "/me/promo-code", { code }),
   deleteAccount: () => request<void>("DELETE", "/me"),

@@ -10,7 +10,7 @@
     "android": {
       "package": "tg.drivelearn.app",
       "adaptiveIcon": {
-        "backgroundColor": "#1FA463",
+        "backgroundColor": "#1565C0",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"

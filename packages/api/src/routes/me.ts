@@ -14,6 +14,7 @@ const PatchMe = z.strictObject({
 });
 
 const PromoCode = z.strictObject({ code: z.string().max(20).nullable() });
+const PassCode = z.strictObject({ code: z.string().trim().min(1).max(40) });
 
 export async function getMe(deps: Deps, userId: string) {
   return row(
@@ -56,6 +57,13 @@ export function meRoutes(deps: Deps) {
       code,
     ]);
     return c.json({ driving_school_name: result?.name ?? null });
+  });
+
+  // Code d'activation du Pass Examen, acheté hors de l'application.
+  r.post("/pass-code", async (c) => {
+    const { code } = PassCode.parse(await c.req.json());
+    const pass = await row<{ ends_at: string }>(deps.db, "select ends_at from redeem_pass_code($1, $2)", [c.get("userId"), code]);
+    return c.json({ pass_ends_at: pass?.ends_at ?? null }, 201);
   });
 
   r.delete("/", async (c) => {

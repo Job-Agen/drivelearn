@@ -3,6 +3,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { api } from "../lib/api";
+import { PASS_SALES_IN_APP } from "../lib/config";
 import { useApp } from "../state/app";
 import { Illustration } from "../ui/Illustration";
 import { Badge, Body, Button, ErrorText, Row, Screen, Title, TopBar } from "../ui/kit";
@@ -58,7 +59,7 @@ export default function ExamsScreen() {
         canStart || !status ? (
           <Button label={open ? "Reprendre l'examen" : "Commencer l'examen"} onPress={start} loading={busy} disabled={!canStart} />
         ) : (
-          <Button label="Obtenir le Pass Examen" onPress={() => router.push("/premium")} />
+          <Button label={PASS_SALES_IN_APP ? "Obtenir le Pass Examen" : "J'ai un code d'activation"} onPress={() => router.push("/premium")} />
         )
       }
     >

@@ -28,6 +28,8 @@ const BUSINESS_ERRORS: Record<string, [number, string]> = {
   too_many_reports: [429, "Trop de signalements aujourd'hui. Réessayez demain."],
   payment_not_found: [404, "Paiement introuvable."],
   amount_mismatch: [409, "Le montant payé ne correspond pas."],
+  invalid_pass_code: [400, "Ce code d'activation n'existe pas. Vérifie-le et réessaie."],
+  pass_code_used: [409, "Ce code d'activation a déjà été utilisé."],
 };
 
 const INVALID_INPUT_SQLSTATES = new Set(["23514", "23503", "22P02", "22007", "22008"]);

@@ -9,7 +9,7 @@ import { Flag, Illustration } from "../../ui/Illustration";
 import { Screen } from "../../ui/kit";
 import { Group, ListRow } from "../../ui/parts";
 import { colors, fonts, radius, space } from "../../ui/theme";
-import { PRIVACY_URL } from "../(auth)/sign-up";
+import { PRIVACY_URL } from "../../lib/config";
 
 /** Écran 21 — Mon profil. */
 export default function ProfileScreen() {

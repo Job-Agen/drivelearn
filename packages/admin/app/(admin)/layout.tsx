@@ -13,6 +13,7 @@ const NAV = [
   ["/questions", "Contenus"],
   ["/signalements", "Signalements"],
   ["/auto-ecoles", "Auto-écoles"],
+  ["/codes", "Codes Pass"],
   ["/ventes", "Ventes"],
   ["/reglages", "Réglages"],
 ] as const;

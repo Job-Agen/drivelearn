@@ -1,12 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StyleSheet, View } from "react-native";
+import { PASS_SALES_IN_APP } from "../lib/config";
 import { Illustration } from "../ui/Illustration";
 import { Body, Button, Screen, Title } from "../ui/kit";
 import { Chip, Group, ListRow } from "../ui/parts";
 import { colors, space } from "../ui/theme";
 
-/** Écran 28 — Confirmation du Pass Examen, affiché après un paiement réussi. */
+/** Écran 28 — Confirmation du Pass Examen, après un paiement réussi ou l'activation d'un code. */
 export default function PassConfirmed() {
   return (
     <Screen
@@ -17,7 +18,7 @@ export default function PassConfirmed() {
         </>
       }
     >
-      <Chip label="Paiement confirmé" />
+      <Chip label={PASS_SALES_IN_APP ? "Paiement confirmé" : "Code activé"} />
       <Illustration name="premiumOk" width="100%" />
       <View style={{ gap: space.xs }}>
         <Title center>Ton Pass Examen est activé</Title>

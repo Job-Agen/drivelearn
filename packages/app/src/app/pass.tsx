@@ -3,6 +3,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { api, type Payment } from "../lib/api";
+import { PASS_SALES_IN_APP } from "../lib/config";
 import { fcfa } from "../ui/money";
 import { Button, ErrorText, Screen, TopBar } from "../ui/kit";
 import { InfoBox } from "../ui/parts";
@@ -17,7 +18,7 @@ export default function PassScreen() {
   const [error, setError] = useState<string | null>(null);
   useFocusEffect(
     useCallback(() => {
-      Promise.all([api.examStatus(), api.payments()])
+      Promise.all([api.examStatus(), PASS_SALES_IN_APP ? api.payments() : Promise.resolve([] as Payment[])])
         .then(([s, p]) => {
           setStatus(s);
           setPayments(p);
@@ -32,7 +33,7 @@ export default function PassScreen() {
   return (
     <Screen
       header={<TopBar onBack={() => router.back()} title="Mon Pass Examen" />}
-      footer={active ? null : <Button label="Obtenir le Pass Examen" onPress={() => router.push("/premium")} />}
+      footer={active ? null : <Button label={PASS_SALES_IN_APP ? "Obtenir le Pass Examen" : "J'ai un code d'activation"} onPress={() => router.push("/premium")} />}
     >
       <View style={styles.banner}>
         <View style={styles.crown}>
@@ -51,7 +52,7 @@ export default function PassScreen() {
           </View>
         </View>
         <Line icon="calendar" label="Échéance :" value={end ?? "—"} />
-        <Line icon="card" label="Paiement :" value="Flooz ou T-Money" />
+        <Line icon="card" label={PASS_SALES_IN_APP ? "Paiement :" : "Activation :"} value={PASS_SALES_IN_APP ? "Flooz ou T-Money" : "Code d'activation"} />
       </View>
       <InfoBox text="Tes résultats restent conservés après l'expiration du Pass." />
       {payments.length > 0 ? <Text style={styles.section}>Mes paiements</Text> : null}
