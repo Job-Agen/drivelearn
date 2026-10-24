@@ -66,7 +66,7 @@ export default async function ProgramPage({
         title={program.name}
         subtitle={`${program.country_code} · ${program.license_type}`}
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={program.status} />
             <Link href={`/programmes/${id}/examen`} className={buttonClass("secondary")}>Examen et publication</Link>
             <Link href={`/questions?program=${id}`} className={buttonClass()}>Questions</Link>
@@ -81,7 +81,7 @@ export default async function ProgramPage({
       )}
       {units.map((unit) => (
         <Card key={unit.id}>
-          <form action={unitAction} className="mb-4 flex items-end gap-2">
+          <form action={unitAction} className="mb-4 flex flex-wrap items-end gap-2">
             <input type="hidden" name="program_id" value={id} />
             <input type="hidden" name="unit_id" value={unit.id} />
             <Field label={`Unité ${unit.position}`}><input name="title" defaultValue={unit.title} className={inputClass} /></Field>
@@ -91,7 +91,7 @@ export default async function ProgramPage({
             <Button variant="danger" name="op" value="delete">Supprimer</Button>
           </form>
           {unit.lessons.map((lesson) => (
-            <form key={lesson.id} action={lessonAction} className="mb-3 grid grid-cols-2 gap-3 rounded-xl border border-bord p-4">
+            <form key={lesson.id} action={lessonAction} className="mb-3 grid grid-cols-1 gap-3 rounded-xl border border-bord p-3 md:grid-cols-2 md:p-4">
               <input type="hidden" name="program_id" value={id} />
               <input type="hidden" name="lesson_id" value={lesson.id} />
               <Field label={`Leçon ${lesson.position}`}><input name="title" defaultValue={lesson.title} className={inputClass} /></Field>
@@ -101,18 +101,18 @@ export default async function ProgramPage({
                 <Field label="Conseil du mentor"><input name="mentor_tip" defaultValue={lesson.mentor_tip ?? ""} className={inputClass} /></Field>
                 <ImageField name="intro_image_path" label="Image de l'explication" current={lesson.intro_image_path} currentUrl={imageUrl(lesson.intro_image_path)} accept={ACCEPTED_IMAGES} />
               </div>
-              <div className="col-span-2 flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 md:col-span-2">
                 <Button name="op" value="save">Enregistrer</Button>
                 <Button variant="secondary" name="op" value="up">↑</Button>
                 <Button variant="secondary" name="op" value="down">↓</Button>
                 <Button variant="danger" name="op" value="delete">Supprimer</Button>
-                <span className="ml-auto text-xs text-gris">
+                <span className="w-full text-xs text-gris sm:ml-auto sm:w-auto">
                   {Object.entries(lesson.counts).map(([s, n]) => `${n} ${s}`).join(" · ") || "aucune question"}
                 </span>
               </div>
             </form>
           ))}
-          <form action={unitAction} className="flex items-end gap-2">
+          <form action={unitAction} className="flex flex-wrap items-end gap-2">
             <input type="hidden" name="program_id" value={id} />
             <input type="hidden" name="unit_id" value={unit.id} />
             <Field label="Nouvelle leçon"><input name="title" required className={inputClass} /></Field>
@@ -121,7 +121,7 @@ export default async function ProgramPage({
         </Card>
       ))}
       <Card title="Nouvelle unité">
-        <form action={unitAction} className="flex items-end gap-2">
+        <form action={unitAction} className="flex flex-wrap items-end gap-2">
           <input type="hidden" name="program_id" value={id} />
           <Field label="Titre"><input name="title" required placeholder="Signalisation" className={inputClass} /></Field>
           <Button name="op" value="create">Ajouter l'unité</Button>

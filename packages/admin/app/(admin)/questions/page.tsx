@@ -39,7 +39,7 @@ export default async function QuestionsPage({
         actions={<Link href={`/questions/nouvelle?program=${programId}`} className={buttonClass()}>Nouvelle question</Link>}
       />
       <Flash ok={sp.ok} error={sp.error} />
-      <form className="mb-4 grid grid-cols-5 gap-3">
+      <form className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <select name="program" defaultValue={programId} className={inputClass}>
           {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>

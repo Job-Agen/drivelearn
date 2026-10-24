@@ -48,7 +48,7 @@ export default async function ProgramsPage({ searchParams }: { searchParams: Pro
         </table>
       </Card>
       <Card title="Nouveau programme">
-        <form action={create} className="grid grid-cols-4 items-end gap-3">
+        <form action={create} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Code pays"><input name="country_code" required maxLength={2} placeholder="TG" className={inputClass} /></Field>
           <Field label="Permis"><input name="license_type" required defaultValue="voiture" className={inputClass} /></Field>
           <Field label="Nom"><input name="name" required placeholder="Togo — Permis voiture" className={inputClass} /></Field>

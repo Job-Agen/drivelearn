@@ -50,12 +50,12 @@ export default async function ExamPage({
     <>
       <PageTitle title="Configurer l'examen blanc" subtitle={program.name} actions={<StatusBadge status={program.status} />} />
       <Flash {...flash} />
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2">
+      <div className="grid items-start gap-5 lg:grid-cols-3">
+        <div className="lg:col-span-2">
           <Card title="Paramètres généraux">
             <form action={saveSettings} className="space-y-4">
               <input type="hidden" name="program_id" value={id} />
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Field label="Nombre de questions"><input name="exam_question_count" type="number" min={1} max={100} defaultValue={program.exam_question_count} className={inputClass} /></Field>
                 <Field label="Seuil de réussite"><input name="exam_pass_mark" type="number" min={1} defaultValue={program.exam_pass_mark} className={inputClass} /></Field>
                 <Field label="Secondes par question"><input name="exam_seconds_per_question" type="number" min={5} max={600} defaultValue={program.exam_seconds_per_question} className={inputClass} /></Field>
