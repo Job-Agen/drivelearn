@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 export const inputClass =
   "w-full rounded-[10px] border-[1.5px] border-bord bg-white px-3 py-2 text-[15px] text-texte focus:border-bleu-vif focus:outline-2 focus:outline-bleu-doux";
 export const tableClass =
-  "w-full text-left text-sm [&_td]:px-3 [&_td]:py-2.5 [&_th]:px-3 [&_th]:py-2.5";
+  "w-full min-w-[560px] text-left text-sm [&_td]:px-3 [&_td]:py-2.5 [&_th]:px-3 [&_th]:py-2.5";
 export const linkClass = "font-bold text-bleu hover:underline";
 
 const BUTTON = {
@@ -29,7 +29,7 @@ export function PageTitle({ title, subtitle, back, actions }: { title: ReactNode
             ← {back[1]}
           </Link>
         )}
-        <h1 className="text-[28px] leading-tight font-black text-nuit">{title}</h1>
+        <h1 className="text-2xl leading-tight font-black text-nuit md:text-[28px]">{title}</h1>
         {subtitle && <p className="mt-1 text-gris">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -39,7 +39,8 @@ export function PageTitle({ title, subtitle, back, actions }: { title: ReactNode
 
 export function Card({ title, children, className = "" }: { title?: string; children: ReactNode; className?: string }) {
   return (
-    <section className={`mb-4 rounded-[14px] border border-bord bg-white p-[18px] ${className}`}>
+    // overflow-x-auto : sur téléphone, un tableau trop large défile dans sa carte au lieu d'élargir la page.
+    <section className={`mb-4 overflow-x-auto rounded-[14px] border border-bord bg-white p-4 md:p-[18px] ${className}`}>
       {title && <h2 className="mb-3 text-[19px] font-extrabold text-nuit">{title}</h2>}
       {children}
     </section>

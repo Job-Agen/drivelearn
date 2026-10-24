@@ -30,11 +30,11 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       <PageTitle title="Réglages" subtitle="Valeurs communes à tous les programmes." />
       <Flash {...flash} />
       <Card>
-        <form action={save} className="grid max-w-2xl grid-cols-2 gap-4">
+        <form action={save} className="grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
           {KEYS.map((k) => (
             <Field key={k} label={LABELS[k]}><input name={k} type="number" defaultValue={settings[k]} className={inputClass} /></Field>
           ))}
-          <div className="col-span-2"><Button>Enregistrer</Button></div>
+          <div className="sm:col-span-2"><Button>Enregistrer</Button></div>
         </form>
       </Card>
     </>

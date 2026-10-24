@@ -24,9 +24,9 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
         subtitle={`Mois ${month}`}
         actions={<Link href={`/ventes/export?${query}`} className={buttonClass()}>Exporter (CSV)</Link>}
       />
-      <form className="mb-4 flex gap-3">
-        <input name="month" type="month" defaultValue={month} className={`${inputClass} w-48`} />
-        <select name="school" defaultValue={sp.school ?? ""} className={`${inputClass} w-64`}>
+      <form className="mb-4 flex flex-wrap gap-3">
+        <input name="month" type="month" defaultValue={month} className={`${inputClass} sm:w-48`} />
+        <select name="school" defaultValue={sp.school ?? ""} className={`${inputClass} sm:w-64`}>
           <option value="">Toutes les auto-écoles</option>
           {schools.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>

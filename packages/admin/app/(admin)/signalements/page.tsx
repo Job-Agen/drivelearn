@@ -56,11 +56,11 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             Question : <Link href={`/questions/${r.question_id}`} className="font-bold text-bleu hover:underline">{r.prompt.slice(0, 100)}</Link>
           </p>
           {r.comment && <p className="mb-3 rounded-xl bg-fond p-3 text-sm">{r.comment}</p>}
-          <form action={save} className="flex items-end gap-3">
+          <form action={save} className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <input type="hidden" name="id" value={r.id} />
             <input type="hidden" name="back" value={`/signalements?status=${status}`} />
             <textarea name="admin_note" defaultValue={r.admin_note ?? ""} placeholder="Note de traitement" rows={1} className={inputClass} />
-            <select name="status" defaultValue={r.status} className={`${inputClass} w-40`}>
+            <select name="status" defaultValue={r.status} className={`${inputClass} sm:w-40`}>
               <option value="nouveau">Nouveau</option>
               <option value="en_cours">En cours</option>
               <option value="resolu">Résolu</option>

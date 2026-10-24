@@ -51,14 +51,14 @@ export default async function CodesPage({ searchParams }: { searchParams: Promis
         {batches.length === 0 && <p className="mt-3 text-gris">Aucun code pour l'instant.</p>}
       </Card>
       <Card title="Nouveau lot de codes">
-        <form action={create} className="grid grid-cols-[2fr_2fr_1fr_1fr_auto] items-end gap-3">
-          <Field label="Nom du lot"><input name="label" required placeholder="Auto-école Le Volant – novembre" className={inputClass} /></Field>
-          <Field label="Auto-école (facultatif)">
+        <form action={create} className="grid grid-cols-2 items-end gap-3 lg:grid-cols-[2fr_2fr_1fr_1fr_auto]">
+          <div className="col-span-2 lg:col-span-1"><Field label="Nom du lot"><input name="label" required placeholder="Auto-école Le Volant – novembre" className={inputClass} /></Field></div>
+          <div className="col-span-2 lg:col-span-1"><Field label="Auto-école (facultatif)">
             <select name="school" defaultValue="" className={inputClass}>
               <option value="">Aucune (vente directe)</option>
               {schools.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
-          </Field>
+          </Field></div>
           <Field label="Nombre de codes"><input name="count" type="number" min={1} max={1000} defaultValue={20} className={inputClass} /></Field>
           <Field label="Durée (jours)"><input name="duration_days" type="number" min={1} max={730} defaultValue={settings.pass_duration_days} className={inputClass} /></Field>
           <Button>Créer</Button>
