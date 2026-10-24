@@ -78,7 +78,7 @@ export default function Onboarding() {
           </ChoiceRow>
         ))}
         {!programs ? <Button label="Réessayer" variant="outline" onPress={loadPrograms} /> : null}
-        <InfoBox title="Catalogue de démonstration" text="Certains contenus seront bientôt disponibles dans d'autres pays." />
+        <InfoBox title="D'autres pays arrivent bientôt" text="Ton parcours suit le code de la route de ton pays." />
         <Text style={styles.section}>Quel permis prépares-tu ?</Text>
         <ChoiceRow selected>
           <Ionicons name="car" size={30} color={colors.blue} />
